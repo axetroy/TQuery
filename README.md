@@ -7,7 +7,7 @@ IE8下，不定期删除某些兼容IE8下的部分。
 
 
 <h4>如何添加插件？</h4>
-<p>1，源码中提供了一个extand方法，用于添加插件<p>
+<p>1，源码中提供了一个extend方法，用于添加插件<p>
 格式是这样$().extend(fnName,fn);	参数：方法名，执行的方法
 比如
 <pre>$().extend('alert',function(){
