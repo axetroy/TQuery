@@ -105,12 +105,25 @@ function TQuery(tArg){
 	}
 	this.length = this.elements.length;
 }
-//========链式操作方法========
+//========选择器和过滤器========
 //eq根据下标选择
 TQuery.prototype.eq = function(n){
 	var m = n || 0;
 	this.length = 1;
 	return $(this.elements[m]);//作为对象存进this.elements，以便链式结构
+};
+//返回当前节点的index值
+TQuery.prototype.index = function(){
+	var index = 0;
+	var aBrother = this.elements[0].parentNode.children;//获取兄弟节点
+	var length = aBrother.length;
+	for(var i=0;i<length;i++){//遍历
+		if( aBrother[i] == this.elements[0] ){//如果匹配到
+			index = i;
+			break;
+		}
+	}
+	return index;
 };
 //not过滤器,从元素集合中，剔除某些部分
 TQuery.prototype.not = function(str){
@@ -132,54 +145,14 @@ TQuery.prototype.not = function(str){
 					childElements.push( this.elements[i] );
 				}
 		}//swicth
-		/*
-		if(this.doc.querySelectorAll){//现代浏览器
-			var aElems = this.elements[i].querySelectorAll(':not(' + str +')');
-			var length = aElems.length;
-			var j =0;
-			while(j<length){
-				childElements.push( aElems[j] );
-				j++
-			}
-		}else if( !this.doc.querySelectorAll ){
-			alert( '您的浏览器版本太低，请升级至IE8或以上，或者使用chrome，firefox，opera等现代浏览器' );
-		}
-		*/
-		/*
-		//让IE8以下去死，不兼容了
-		else{//通用
-			var aElems =this.elements[i].getElementsByTagName('*');//获得所有子节点
-			var length = aElems.length;
-			switch( str.charAt(0) ){
-				case '#' : 	//#div1
-					for(var j=0;j<length;j++){
-						if( $(aElems[j]).attr('id') !== str.substring(1) ){
-							childElements.push(aElems[j]);
-						}
-					}
-					break;
-				case '.' :	//.class
-					for(var j=0;j<length;j++){
-						if( $().hasClass( aElems[j],str.substring(1) ) == false ){
-							childElements.push(aElems[j]);
-						}
-					}
-					break;
-				default :	//tagName
-					for(var j=0;j<length;j++){
-						if(aElems[j].tagName.toLowerCase() != str ){
-							childElements.push(aElems[j]);
-						}
-					}//for
-			}//switch
-		}
-		*/
 	}//for
 	this.elements = childElements;
 	this.length = childElements.length;//返回新的长度
 	return this;
 };
 //filter,从元素集合众，特选某些部分
+//支持id className tagName
+//$('ul li').filter('.item')	从众多li中，选出class=item的项
 TQuery.prototype.filter = function(str){
 	var childElements = [];//存放临时数据
 	for(var i=0;i<this.length;i++){
@@ -205,6 +178,8 @@ TQuery.prototype.filter = function(str){
 	return this;
 };
 //find选择器，选择子集元素包含  id class tagName attr
+//支持id className tagName attribute
+//$('ul').find('li'),$('ul').find('[data-src]')
 TQuery.prototype.find = function(str){
 	var childElements = [];//存放临时数据
 	for(var i=0;i<this.length;i++){
@@ -263,6 +238,7 @@ TQuery.prototype.find = function(str){
 	return this;
 };
 //add，将元素添加到已有的合集,去掉重复项
+//$('p').css('width','500').add('span').css('display','block');
 TQuery.prototype.add = function(str){
 	var newTQ = $(str);//先获取元素
 	var newTQLength = newTQ.length;
@@ -282,510 +258,6 @@ TQuery.prototype.add = function(str){
 	this.elements = temps;
 	this.length = this.elements.length;//生成新的长度
 	return this;//返回对象
-};
-//each循环遍历
-TQuery.prototype.each = function(fn){
-	for(var i=0;i<this.length;i++){
-		var _this = this.elements[i];
-		fn.call(_this);
-	}
-	return this;//返回对象
-};
-//click事件
-TQuery.prototype.click = function(fn){
-	var length = this.elements.length;
-	for(var i=0;i<length;i++){
-		addEvent(this.elements[i],'click',fn);
-	}
-	return this;//返回对象，进行链式操作
-};
-//获取DOM/window/document的width/height,单位px带不带都行
-TQuery.prototype.width = function(setting){
-	if(!setting && this.elements[0] instanceof Object && (this.elements[0].alert || this.elements[0].body) ){//如果是window，或document
-		return this.doc.body.scrollWidth> this.doc.documentElement.scrollWidth ? this.doc.body.scrollWidth : this.doc.documentElement.scrollWidth;//获取带padding和margin的值
-	}else if(setting){//设置宽度
-		this.css('width',setting);
-		return this;//返回对象，进行链式操作
-	}else{//读取
-		return this.elements[0].offsetWidth;//读取
-	}
-};
-TQuery.prototype.height = function(setting){
-	if(this.elements[0] instanceof Object && (this.elements[0].alert || this.elements[0].body) ){//如果是window，或document，则返回整个文档高度
-		return this.doc.body.scrollHeight>this.doc.documentElement.scrollHeight ? this.doc.body.clientHeight : this.doc.documentElement.scrollHeight;//获取带padding和margin的值
-	}else if(setting){//设置高度
-		//this.elements[0].style.height = setting.toString().replace('px','') + 'px';
-		this.css('height',setting);
-		return this;//返回对象，进行链式操作
-	}else if(!setting){
-		return this.elements[0].offsetHeight;//获取高度
-	}
-};
-//获取可视区域宽高
-TQuery.prototype.viewWidth = function(){
-	return this.doc.body.clientWidth<this.doc.documentElement.clientWidth ? this.doc.body.clientWidth : this.doc.documentElement.clientWidth;//取较小值
-};
-TQuery.prototype.viewHeight = function(){
-	return this.doc.body.clientHeight<this.doc.documentElement.clientHeight ? this.doc.body.clientHeight : this.doc.documentElement.clientHeight;//取较小值
-};
-//获取DOM的top/left
-TQuery.prototype.top = function(setting){
-	if(setting){
-		this.css('top',setting);
-		return this;//返回对象，进行链式操作
-	}
-	return parseInt( this.elements[0].offsetTop );
-};
-TQuery.prototype.left = function(setting){
-	if(setting){
-		this.css('left',setting);
-		return this;//返回对象，进行链式操作
-	}
-	return parseInt( this.elements[0].offsetLeft );
-};
-//鼠标滚轮滚动
-/*
-IE			attachEvent				mousewheel				wheelDelta		滚轮下e.wheelDelta<0
-firefox		addEventListener		DOMMouseScroll			detail			滚轮下e.detail>0
-chrome		addEventListener		mousewheel				wheelDelta		滚轮下e.wheelDelta<0
-*/
-
-TQuery.prototype.mouseScroll = function(json){
-	this.bind('mousewheel DOMMouseScroll',function(e){
-		if(e.wheelDelta){//chrome,ie
-			if( e.wheelDelta > 0 ){//滚轮向下滚动
-				json.up.call(this,e);
-			}else{
-				json.down.call(this,e);
-			}
-		}else{//狗日的firefox
-			if(e.detail<0){//鼠标滚轮按下
-				json.up.call(this,e);
-			}else{
-				json.down.call(this,e);
-			}
-		}
-	});
-	return this;//返回对象，进行链式操作
-};
-//scroll到某一位置，或获取滚动条位置
-TQuery.prototype.scrollTop = function(target,endFn){
-	if(target!==0 && !target){//没有参数，则读取
-		var scrollTop = this.doc.body.scrollTop || this.doc.documentElement.scrollTop;
-		return scrollTop;
-	}
-	var _this = this;
-	clearInterval(this.doc.timerScroll);
-	this.doc.timerScroll = setInterval(function(){
-		var nowScrollTop = _this.doc.body.scrollTop || _this.doc.documentElement.scrollTop;
-		var dif = Math.abs(nowScrollTop-target);	//目前与目标的差值
-		var speed = (dif/10)+10;	//滚动速度
-		if(nowScrollTop-target<0){//向下滚
-			speed = speed;
-		}else{//向上滚动
-			speed = - speed;
-		}
-		var position = nowScrollTop + (speed);	//生成计算后的位置
-		if( (speed>0 && position>=target) || (speed<0 && position<=target) ){//如果到达目标点
-			_this.doc.body.scrollTop = _this.doc.documentElement.scrollTop = target;
-			endFn && endFn.call(_this);	//防止this冲突，此处this指的是TQuery对象
-			clearInterval(_this.doc.timerScroll);
-		}
-		_this.doc.body.scrollTop = _this.doc.documentElement.scrollTop = position;
-	},20);
-	return this;//返回对象，进行链式操作
-};
-//scroll到顶部或底部
-TQuery.prototype.scroll = function(dir,step,endFn) { //obj随意，dir>0往上滚，dir<0往下滚
-	var step1 = step || 10;
-	clearInterval(this.doc.timerScroll);
-	var _this = this;
-	var speed;
-	this.doc.timerScroll = setInterval(function() {
-		var position;
-		if (dir == 'up') { //往上滚动
-			speed = ($(this).size('scrollTop') / step1) + 1;
-			position = $(this).size('scrollTop') - speed;
-			if (position <= 0) { //如果滚到顶部
-				_this.doc.body.scrollTop = _this.doc.documentElement.scrollTop = 0;
-				endFn && endFn();
-				clearInterval(_this.doc.timerScroll);
-			}
-		}else if(dir == 'down'){ //往下滚动
-			speed = (($(this).size('scrollHeight') - $(this).size('scrollTop') - $(this).size('clientHeight')) / step) + 1;
-			position = $(this).size('scrollTop') + speed;
-			if (position + $(this).size('clientHeight') >= $(this).size('scrollHeight')) { //如果滚到底部
-				_this.doc.body.scrollTop = _this.doc.documentElement.scrollTop = $(this).size('scrollHeight');
-				endFn && endFn();
-				clearInterval(_this.doc.timerScroll);
-			}
-		}
-		_this.doc.body.scrollTop = _this.doc.documentElement.scrollTop = position;
-	}, 20);
-	return this;//返回对象，进行链式操作
-};
-//事件的绑定与删除
-TQuery.prototype.bind = function(type,fn){
-	if(arguments.length==1){//如果只传一个json参数e
-		for(var k=0;k<this.length;k++){
-			for(var attr in type){
-				addEvent(this.elements[k],attr,type[attr]);
-			}
-		}
-	}else{//如果传两个参数，则统一执行一个e
-		var events = type.split(' ');
-		var eventsLength = events.length;
-		for(var i=0;i<this.length;i++){
-			var j=0;
-			while(j<eventsLength){
-				addEvent(this.elements[i],events[j],fn);
-				j++;
-			}
-		}
-	}
-	return this;//返回对象，进行链式操作
-};
-//解除事件绑定，匿名函数无法解除绑定
-TQuery.prototype.unbind = function(e,fn){
-	for(var i=0;i<this.length;i++){
-		removeEvent(this.elements[i],e,fn);
-	}
-	return this;//返回对象，进行链式操作
-};
-//类似onload,onmouseover等
-TQuery.prototype.on = function(type,fn){
-	if(arguments.length==1){//如果只传一个json参数
-		for(var k=0;k<this.length;k++){
-			for(var attr in type){
-				this.elements[k][ 'on'+attr ] = type[attr];
-			}
-		}
-	}else{//如果传两个参数e,fn
-		var events = type.split(' ');//获取每个事件
-		var eventsLength = events.length;
-		for(var i=0;i<this.length;i++){
-			var j =0;
-			while(j<eventsLength){
-				this.elements[i][ 'on'+events[j] ] = fn;
-				j++;
-			}
-		}
-	}
-	return this;//返回对象，进行链式操作
-};
-//one执行一次操作
-TQuery.prototype.one = function(e,fn){
-	var _this = this;
-	for(var i=0;i<this.length;i++){
-		this.on(e,function(){
-			fn.call(_this);//解决匿名函数this指针不正确的问题
-			var es = e.split(' ');
-			var j=0;
-			while(j<es.length){
-				this['on'+es[j]] = null;
-				j++;
-			}
-		});
-	}
-	return this;//返回对象，进行链式操作
-};
-//show
-TQuery.prototype.show = function(){
-	for(var i=0;i<this.length;i++){
-		this.elements[i].style.display = 'block';
-	}
-	return this;//返回对象，进行链式操作
-};
-//hide
-TQuery.prototype.hide = function(){
-	for(var i=0;i<this.length;i++){
-		this.elements[i].style.display = 'none';
-	}
-	return this;//返回对象，进行链式操作
-};
-//设置hover
-//配置：json{
-//	'over':overfn(),
-//	'out':outfn(),
-//	'overDelay':500		//延迟执行overfn()		可选项，默认为0，单位ms
-//	'outDelay':1000		//延迟执行outfn()
-//}
-TQuery.prototype.hover = function(json){
-	if( typeof json.overDelay=='undefined' ){
-		json.overDelay = 0;
-	}
-	if( typeof json.outDelay=='undefined' ){
-		json.outDelay = 0;
-	}
-	this.bind({
-		'mouseover':function(){
-			var _this = this;
-			clearTimeout( this.hover );
-			this.hover = setTimeout(function(){
-				json.over.call(_this);
-			},json.overDelay);
-		},
-		'mouseout':function(){
-			var this_ = this;
-			clearTimeout( this.hover );
-			this.hover = setTimeout(function(){
-				json.out.call(this_);
-			},json.outDelay);
-		}
-	});
-	return this;//返回对象，进行链式操作
-};
-//设置css
-//$('').css('width',value)	//value>>>200||200px||20%，可以不带单位px，可以设置百分比
-TQuery.prototype.css = function(attr,value){
-	var type = /(width|left|top|bottom|right|margin|padding){1,}/ig;
-	var type2 = /height/ig;
-	if(arguments.length==2){//设置样式
-		if( type.test(attr) && value.indexOf('%')<0 ){
-			value = parseFloat(value).toFixed(2) + 'px';
-		}
-		for(var m=0;m<this.length;m++){
-			this.elements[m].style[attr] = value;
-		}
-	}else{//一个参数
-		if(typeof attr=="string"){//获取样式
-			return this.elements[0].currentStyle ? this.elements[0].currentStyle[attr] : getComputedStyle(this.elements[0])[attr];
-		}else if( typeof(attr) == "object" && Object.prototype.toString.call(attr).toLowerCase() == "[object object]" && !attr.length ){//json
-			for(var i =0;i<this.length;i++){
-				for(var k in attr){
-					//k == 属性名字,width,height,opacity等
-					//attr[k] == 属性值,300px,#303030等
-					if((type.test(k) || type2.test(k)) && attr[k].indexOf('%')<0 ){//如果没有%符号
-						attr[k] = parseFloat( attr[k] ).toFixed(2) + 'px';
-					}
-					this.elements[i].style[k] = attr[k];
-				}
-			}
-		}
-	}
-	return this;//返回对象，进行链式操作
-};
-//设置动画
-//json表示要变化的属性，configjson表示动画过程/结束要执行的函数,以及速度参数
-//目前不支持百分比，可以不带单位px,opacity单位100制
-TQuery.prototype.animate = function(json,configjson){
-	//如果两个参数.animate('width','300');
-	for(var i=0;i<this.length;i++){
-		var _this = this.elements[i];
-		clearInterval(_this.animate);
-		_this.animate = setInterval(function() {
-			//注意，此处this指的是window（匿名函数）
-			var bStop = true;//判断运动是否停止
-			for(var attr in json){//attr代表属性,'width','height'.而json[attr]代表数值
-				// 1. 取得当前的值（可以是width，height，opacity等的值）
-				var objAttr = 0 ;
-				if(attr == 'opacity'){//获取当前数值
-					objAttr = Math.round(parseFloat( $(_this).style(attr) ) * 100);
-				}else{
-					objAttr = parseInt( $(_this).style(attr) );
-				}
-				// 2.计算运动速度
-				var jsonattr = parseFloat( json[attr] );
-				var speedConfig = (configjson && typeof ( configjson.speed ) != 'undefined') ? configjson.speed : 10;
-				var iSpeed = (jsonattr - objAttr) / speedConfig;	//(目标数值-当前数值)/10
-				iSpeed = iSpeed > 0 ? Math.ceil(iSpeed) : Math.floor(iSpeed);	//如果速度>0，则速度向上取整，如果小于0，则保留小数
-				// 3. 检测所有运动是否到达目标
-				//objAttr,当前点，json[attr]为目标点
-				if ( (iSpeed>0 && objAttr <= jsonattr) || (iSpeed<0 && objAttr >= jsonattr) ) {//如果有其中一项没有达到目标
-					bStop = false;
-				}
-				if (attr == "opacity") {
-					_this.style.filter = 'alpha(opacity:' + (objAttr + iSpeed) + ')';
-					_this.style.opacity = (objAttr + iSpeed) / 100;
-				} else {
-					_this.style[attr] = objAttr + iSpeed + 'px';	//赋值开始运动
-				}
-				configjson && typeof ( configjson.load  != 'undefined') && configjson.load.call(_this);//每次都执行
-				if (bStop) { // 表示所有运动都到达目标值
-					clearInterval(_this.animate);
-					configjson && typeof (configjson.end) != 'undefined' && configjson.end.call(_this);//传入参数，防止当前this错误
-				}
-			}//for
-		},30);
-	}//for
-	return this;//返回对象，进行链式操作
-};
-//停止动画
-TQuery.prototype.stop = function(delay){
-	var stardelay = delay ? delay : 0;
-	setTimeout(function(){
-		clearInterval( $(this).elements[0].animate );
-	},stardelay);
-	return this;//返回对象，进行链式操作
-};
-//设置拖拽
-TQuery.prototype.drag = function(json){
-	for(var i=0;i<this.length;i++){
-		new Drag( this.elements[i],this.elements[i],json );
-	}
-	return this;
-};
-//设置attr
-TQuery.prototype.attr = function(attr,value){
-	//attr不能是数字
-	if(arguments.length==2){//2个参数，设置属性
-		for(var k=0;k<this.length;k++){
-			if(this.elements[k][attr]){
-				this.elements[k][attr] = value;
-			}else{
-				this.elements[k].setAttribute(attr,value);
-			}
-		}
-	}else if(arguments.length==1){//1个参数
-		if( typeof(attr) == "object" && Object.prototype.toString.call(attr).toLowerCase() == "[object object]" && !attr.length ){//如果是json，则分别设置属性
-			for(var i=0;i<this.length;i++){
-				for(var j in attr){
-					if( this.elements[i][j] ){//如果属性是可以直接读取
-						this.elements[i][j] = attr[j];
-					}else{//如果是自定义属性
-						this.elements[i].setAttribute(j,attr[j]);
-					}
-				}
-			}
-		}else{//读取属性
-			return this.elements[0][attr] || this.elements[0].getAttribute(attr);
-		}
-	}
-	return this;//返回对象，进行链式操作
-};
-//设置自定义属性
-TQuery.prototype.custormAttr = function(attr,value){
-	if(arguments.length==2){//两个参数，设置属性
-		for(var k=0;k<this.length;k++){
-			this.elements[k].setAttribute(attr,value);
-		}
-	}else if(arguments.length==1){//1个参数
-		if( typeof(attr) == "object" && Object.prototype.toString.call(attr).toLowerCase() == "[object object]" && !attr.length ){//json格式，则分别设置
-			for(var i=0;i<this.length;i++){
-				for(var j in attr){
-					this.elements[i].setAttribute(j,attr[j]);
-				}
-			}
-		}else{//读取属性
-			return this.elements[0].getAttribute(attr);
-		}
-	}
-	return this;//返回对象，进行链式操作
-};
-//点击开关toggle
-TQuery.prototype.toggle = function(){
-	var _arguments = arguments;
-	var	length = _arguments.length;
-	var count = 0;
-	for(var i=0;i<this.length;i++){
-		var _this = this.elements[i];
-		this.on('click',function(){
-			_arguments[count++%length].call(_this);//执行	，解决this错误的问题
-		});
-	}
-	return this;//返回对象，进行链式操作
-};
-//设置innerHTML
-TQuery.prototype.html = function(setting){
-	if(setting){//设置
-		for(var i=0;i<this.length;i++){
-			this.elements[i].innerHTML = setting;
-		}
-		return this;
-	}
-	return this.elements[0].innerHTML;
-};
-//设置text
-TQuery.prototype.text = function(setting){
-	if(setting){//设置
-		for(var i=0;i<this.length;i++){
-			this.elements[i].innerText = this.elements[i].textContent = setting;
-		}
-		return this;
-	}
-	//读取
-	return this.elements[0].innerText || this.elements[0].textContent;
-};
-//get,将TQuery对象转换成DOM对象,多个则返回数组
-TQuery.prototype.get = function(n){
-	n = n || 0;
-	if(n=='all' && this.length>1){//如果没有参数，并且多个，则返回数组
-		return this.elements;
-	}
-	return this.elements[n];
-};
-//添加class
-TQuery.prototype.addClass = function(cName){
-	for(var i=0;i<this.length;i++){
-		if (!this.hasClass(this.elements[i],cName)) {//如果不存在class
-			if( this.elements[i].className === null || this.elements[i].className === '' ){
-				this.elements[i].className = cName;
-			}else{
-				this.elements[i].className += " " + cName;
-				if(this.elements[i].className){
-
-				}
-			}
-		}
-	}
-	return this;//返回对象，进行链式操作
-};
-//移除class
-TQuery.prototype.removeClass = function(cName){
-	for(var i=0;i<this.length;i++){
-		if (this.hasClass(this.elements[i],cName)) {
-			this.elements[i].className = this.elements[i].className.replace(new RegExp("(\\s|^)" + cName + "(\\s|$)"), ""); // replace方法是替换 
-		}
-	}
-	return this;//返回对象，进行链式操作
-};
-//插入after，把选择到的元素，插入到obj的后面
-TQuery.prototype.insertAfter = function(obj){
-	var parent;
-	for(var i=0;i<this.length;i++){
-		parent = obj.parentNode;//插入位置的父元素
-		if(parent.lastChild == obj){//如果最后的节点是目标节点，直接添加
-			parent.appendChild(this.elements[i]);
-		}else{//如果不是，则插入在目标元素的下一个兄弟节点的前面，也就是目标元素的后面
-			parent.insertBefore(this.elements[i],obj.nextSibling);
-		}
-	}
-	return this;//返回对象，进行链式操作
-};
-//插入insertBefore，把选择到的元素，插入到obj的前面
-TQuery.prototype.insertBefore =function(obj){
-	for(var i=0;i<this.length;i++){
-		obj.parentNode.insertBefore(this.elements[i],obj);
-	}
-	return this;//返回对象，进行链式操作
-};
-//清空选中节点，但不删除
-TQuery.prototype.empty = function(){
-	for(var i=0;i<this.length;i++){
-		this.html(' ');
-	}
-	return this;//返回对象，进行链式操作
-};
-//删除选中节点
-TQuery.prototype.remove = function(){
-	for(var i=0;i<this.length;i++){
-		this.elements[i].remove();
-	}
-	return this;//返回对象，进行链式操作
-};
-//========非链式操作方法========
-//返回当前节点的index值
-TQuery.prototype.index = function(){
-	var index = 0;
-	var aBrother = this.elements[0].parentNode.children;//获取兄弟节点
-	var length = aBrother.length;
-	for(var i=0;i<length;i++){//遍历
-		if( aBrother[i] == this.elements[0] ){//如果匹配到
-			index = i;
-			break;
-		}
-	}
-	return index;
 };
 //选择当前所选元素，第一个的父节点
 TQuery.prototype.parent = function(){
@@ -910,6 +382,225 @@ TQuery.prototype.slice = function(n,m){
 	this.length = this.elements.length;
 	return this;
 };
+//========事件操作========
+//each循环遍历
+TQuery.prototype.each = function(fn){
+	for(var i=0;i<this.length;i++){
+		var _this = this.elements[i];
+		fn.call(_this);
+	}
+	return this;//返回对象
+};
+//click事件
+TQuery.prototype.click = function(fn){
+	var length = this.elements.length;
+	for(var i=0;i<length;i++){
+		addEvent(this.elements[i],'click',fn);
+	}
+	return this;//返回对象，进行链式操作
+};
+//事件的绑定与删除
+TQuery.prototype.bind = function(type,fn){
+	if(arguments.length==1){//如果只传一个json参数e
+		for(var k=0;k<this.length;k++){
+			for(var attr in type){
+				addEvent(this.elements[k],attr,type[attr]);
+			}
+		}
+	}else{//如果传两个参数，则统一执行一个e
+		var events = type.split(' ');
+		var eventsLength = events.length;
+		for(var i=0;i<this.length;i++){
+			var j=0;
+			while(j<eventsLength){
+				addEvent(this.elements[i],events[j],fn);
+				j++;
+			}
+		}
+	}
+	return this;//返回对象，进行链式操作
+};
+//解除事件绑定，匿名函数无法解除绑定
+TQuery.prototype.unbind = function(e,fn){
+	for(var i=0;i<this.length;i++){
+		removeEvent(this.elements[i],e,fn);
+	}
+	return this;//返回对象，进行链式操作
+};
+//类似onload,onmouseover等
+TQuery.prototype.on = function(type,fn){
+	if(arguments.length==1){//如果只传一个json参数
+		for(var k=0;k<this.length;k++){
+			for(var attr in type){
+				this.elements[k][ 'on'+attr ] = type[attr];
+			}
+		}
+	}else{//如果传两个参数e,fn
+		var events = type.split(' ');//获取每个事件
+		var eventsLength = events.length;
+		for(var i=0;i<this.length;i++){
+			var j =0;
+			while(j<eventsLength){
+				this.elements[i][ 'on'+events[j] ] = fn;
+				j++;
+			}
+		}
+	}
+	return this;//返回对象，进行链式操作
+};
+//one执行一次操作
+TQuery.prototype.one = function(e,fn){
+	var _this = this;
+	for(var i=0;i<this.length;i++){
+		this.on(e,function(){
+			fn.call(_this);//解决匿名函数this指针不正确的问题
+			var es = e.split(' ');
+			var j=0;
+			while(j<es.length){
+				this['on'+es[j]] = null;
+				j++;
+			}
+		});
+	}
+	return this;//返回对象，进行链式操作
+};
+//设置hover
+//配置：json{
+//	'over':overfn(),
+//	'out':outfn(),
+//	'overDelay':500		//延迟执行overfn()		可选项，默认为0，单位ms
+//	'outDelay':1000		//延迟执行outfn()
+//}
+TQuery.prototype.hover = function(json){
+	if( typeof json.overDelay=='undefined' ){
+		json.overDelay = 0;
+	}
+	if( typeof json.outDelay=='undefined' ){
+		json.outDelay = 0;
+	}
+	this.bind({
+		'mouseover':function(){
+			var _this = this;
+			clearTimeout( this.hover );
+			this.hover = setTimeout(function(){
+				json.over.call(_this);
+			},json.overDelay);
+		},
+		'mouseout':function(){
+			var this_ = this;
+			clearTimeout( this.hover );
+			this.hover = setTimeout(function(){
+				json.out.call(this_);
+			},json.outDelay);
+		}
+	});
+	return this;//返回对象，进行链式操作
+};
+//点击开关toggle
+TQuery.prototype.toggle = function(){
+	var _arguments = arguments;
+	var	length = _arguments.length;
+	var count = 0;
+	for(var i=0;i<this.length;i++){
+		var _this = this.elements[i];
+		this.on('click',function(){
+			_arguments[count++%length].call(_this);//执行	，解决this错误的问题
+		});
+	}
+	return this;//返回对象，进行链式操作
+};
+// //鼠标滚轮滚动
+// IE			attachEvent				mousewheel				wheelDelta		滚轮下e.wheelDelta<0
+// firefox		addEventListener		DOMMouseScroll			detail			滚轮下e.detail>0
+// chrome		addEventListener		mousewheel				wheelDelta		滚轮下e.wheelDelta<0
+TQuery.prototype.mouseScroll = function(json){
+	this.bind('mousewheel DOMMouseScroll',function(e){
+		if(e.wheelDelta){//chrome,ie
+			if( e.wheelDelta > 0 ){//滚轮向下滚动
+				json.up.call(this,e);
+			}else{
+				json.down.call(this,e);
+			}
+		}else{//狗日的firefox
+			if(e.detail<0){//鼠标滚轮按下
+				json.up.call(this,e);
+			}else{
+				json.down.call(this,e);
+			}
+		}
+	});
+	return this;//返回对象，进行链式操作
+};
+//scroll到某一位置，或获取滚动条位置
+TQuery.prototype.scrollTop = function(target,endFn){
+	if(target!==0 && !target){//没有参数，则读取
+		var scrollTop = this.doc.body.scrollTop || this.doc.documentElement.scrollTop;
+		return scrollTop;
+	}
+	var _this = this;
+	clearInterval(this.doc.timerScroll);
+	this.doc.timerScroll = setInterval(function(){
+		var nowScrollTop = _this.doc.body.scrollTop || _this.doc.documentElement.scrollTop;
+		var dif = Math.abs(nowScrollTop-target);	//目前与目标的差值
+		var speed = (dif/10)+10;	//滚动速度
+		if(nowScrollTop-target<0){//向下滚
+			speed = speed;
+		}else{//向上滚动
+			speed = - speed;
+		}
+		var position = nowScrollTop + (speed);	//生成计算后的位置
+		if( (speed>0 && position>=target) || (speed<0 && position<=target) ){//如果到达目标点
+			_this.doc.body.scrollTop = _this.doc.documentElement.scrollTop = target;
+			endFn && endFn.call(_this);	//防止this冲突，此处this指的是TQuery对象
+			clearInterval(_this.doc.timerScroll);
+		}
+		_this.doc.body.scrollTop = _this.doc.documentElement.scrollTop = position;
+	},20);
+	return this;//返回对象，进行链式操作
+};
+//scroll到顶部或底部
+TQuery.prototype.scroll = function(dir,step,endFn) { //obj随意，dir>0往上滚，dir<0往下滚
+	var step1 = step || 10;
+	clearInterval(this.doc.timerScroll);
+	var _this = this;
+	var speed;
+	this.doc.timerScroll = setInterval(function() {
+		var position;
+		if (dir == 'up') { //往上滚动
+			speed = ($(this).size('scrollTop') / step1) + 1;
+			position = $(this).size('scrollTop') - speed;
+			if (position <= 0) { //如果滚到顶部
+				_this.doc.body.scrollTop = _this.doc.documentElement.scrollTop = 0;
+				endFn && endFn();
+				clearInterval(_this.doc.timerScroll);
+			}
+		}else if(dir == 'down'){ //往下滚动
+			speed = (($(this).size('scrollHeight') - $(this).size('scrollTop') - $(this).size('clientHeight')) / step) + 1;
+			position = $(this).size('scrollTop') + speed;
+			if (position + $(this).size('clientHeight') >= $(this).size('scrollHeight')) { //如果滚到底部
+				_this.doc.body.scrollTop = _this.doc.documentElement.scrollTop = $(this).size('scrollHeight');
+				endFn && endFn();
+				clearInterval(_this.doc.timerScroll);
+			}
+		}
+		_this.doc.body.scrollTop = _this.doc.documentElement.scrollTop = position;
+	}, 20);
+	return this;//返回对象，进行链式操作
+};
+//show
+TQuery.prototype.show = function(){
+	for(var i=0;i<this.length;i++){
+		this.elements[i].style.display = 'block';
+	}
+	return this;//返回对象，进行链式操作
+};
+//hide
+TQuery.prototype.hide = function(){
+	for(var i=0;i<this.length;i++){
+		this.elements[i].style.display = 'none';
+	}
+	return this;//返回对象，进行链式操作
+};
 //Mutation Observer,DOM变动观察器，异步触发的
 //未完成
 TQuery.prototype.matation = function(options){
@@ -924,20 +615,6 @@ TQuery.prototype.matation = function(options){
 		'arrtibutes': true
 	};
 	observer.observe(this.elements[i],config);
-};
-//hasClass
-TQuery.prototype.hasClass = function(obj,cName){
-	// ( \\s|^ ) 判断前面是否有空格 （\\s | $ ）判断后面是否有空格 两个感叹号为转换为布尔值 以方便做判断
-	return !! obj.className.match(new RegExp("(\\s|^)" + cName + "(\\s|$)"));
-};
-//返回计算后的style样式
-TQuery.prototype.style = function(attr){
-	//IE下，如果宽高设置为百分比，则返回也是百分比。
-	return this.elements[0].currentStyle ? this.elements[0].currentStyle[attr] : getComputedStyle(this.elements[0])[attr];
-};
-//返回个BOM的尺寸
-TQuery.prototype.size = function(attr){
-	return this.doc.documentElement[attr] ? this.doc.documentElement[attr] : this.doc.body[attr];
 };
 //AJAX
 TQuery.prototype.ajax = function(url,SucessFn,FaildFn){
@@ -971,19 +648,298 @@ TQuery.prototype.ajax = function(url,SucessFn,FaildFn){
 		}
 	};
 };
+//==========尺寸size========
+//获取DOM/window/document的width/height,单位px带不带都行
+TQuery.prototype.width = function(setting){
+	if(!setting && this.elements[0] instanceof Object && (this.elements[0].alert || this.elements[0].body) ){//如果是window，或document
+		return this.doc.body.scrollWidth> this.doc.documentElement.scrollWidth ? this.doc.body.scrollWidth : this.doc.documentElement.scrollWidth;//获取带padding和margin的值
+	}else if(setting){//设置宽度
+		for(var i=0;i<this.length;i++){
+			this.elements[i].style.width = setting.toString().replace('px','') + 'px';
+		}
+		return this;//返回对象，进行链式操作
+	}else{//读取
+		return this.elements[0].offsetWidth || parseFloat( this.style('width') );//读取
+	}
+};
+TQuery.prototype.height = function(setting){
+	if(this.elements[0] instanceof Object && (this.elements[0].alert || this.elements[0].body) ){//如果是window，或document，则返回整个文档高度
+		return this.doc.body.scrollHeight>this.doc.documentElement.scrollHeight ? this.doc.body.clientHeight : this.doc.documentElement.scrollHeight;//获取带padding和margin的值
+	}else if(setting){//设置高度
+		for(var i=0;i<this.length;i++){
+			this.elements[i].style.height = setting.toString().replace('px','') + 'px';
+		}
+		return this;//返回对象，进行链式操作
+	}else if(!setting){
+		return this.elements[0].offsetHeight || parseFloat( this.style('height') );//获取高度
+	}
+};
+//获取DOM的top/left
+TQuery.prototype.top = function(setting){
+	if(setting){
+		this.css('top',setting);
+		return this;//返回对象，进行链式操作
+	}
+	return parseInt( this.elements[0].offsetTop );
+};
+TQuery.prototype.left = function(setting){
+	if(setting){
+		this.css('left',setting);
+		return this;//返回对象，进行链式操作
+	}
+	return parseInt( this.elements[0].offsetLeft );
+};
+//获取可视区域宽高
+TQuery.prototype.viewWidth = function(){
+	return this.doc.body.clientWidth<this.doc.documentElement.clientWidth ? this.doc.body.clientWidth : this.doc.documentElement.clientWidth;//取较小值
+};
+TQuery.prototype.viewHeight = function(){
+	return this.doc.body.clientHeight<this.doc.documentElement.clientHeight ? this.doc.body.clientHeight : this.doc.documentElement.clientHeight;//取较小值
+};
+//返回计算后的style样式，带单位
+TQuery.prototype.style = function(attr){
+	//IE下，如果宽高设置为百分比，则返回也是百分比。
+	return this.elements[0].currentStyle ? this.elements[0].currentStyle[attr] : getComputedStyle(this.elements[0])[attr];
+};
+//返回个BOM的尺寸
+TQuery.prototype.size = function(attr){
+	return this.doc.documentElement[attr] ? this.doc.documentElement[attr] : this.doc.body[attr];
+};
+
+//===========属性attribute设置========
+//设置css
+//$('').css('width',value)	//value>>>200||200px||20%，可以不带单位px，可以设置百分比
+TQuery.prototype.css = function(attr,value){
+	var type = /(width|left|top|bottom|right|margin|padding){1,}/ig;
+	var type2 = /height/ig;
+	if(arguments.length==2){//设置样式
+		if( type.test(attr) && value.indexOf('%')<0 ){
+			value = parseFloat(value).toFixed(2) + 'px';
+		}
+		for(var m=0;m<this.length;m++){
+			this.elements[m].style[attr] = value;
+		}
+	}else{//一个参数
+		if(typeof attr=="string"){//获取样式
+			return this.elements[0].currentStyle ? this.elements[0].currentStyle[attr] : getComputedStyle(this.elements[0])[attr];
+		}else if( typeof(attr) == "object" && Object.prototype.toString.call(attr).toLowerCase() == "[object object]" && !attr.length ){//json
+			for(var i =0;i<this.length;i++){
+				for(var k in attr){
+					//k == 属性名字,width,height,opacity等
+					//attr[k] == 属性值,300px,#303030等
+					if((type.test(k) || type2.test(k)) && attr[k].indexOf('%')<0 ){//如果没有%符号
+						attr[k] = parseFloat( attr[k] ).toFixed(2) + 'px';
+					}
+					this.elements[i].style[k] = attr[k];
+				}
+			}
+		}
+	}
+	return this;//返回对象，进行链式操作
+};
+//设置动画
+//json表示要变化的属性，configjson表示动画过程/结束要执行的函数,以及速度参数
+//目前不支持百分比，可以不带单位px,opacity单位100制
+TQuery.prototype.animate = function(json,configjson){
+	//如果两个参数.animate('width','300');
+	for(var i=0;i<this.length;i++){
+		var _this = this.elements[i];
+		clearInterval(_this.animate);
+		_this.animate = setInterval(function() {
+			//注意，此处this指的是window（匿名函数）
+			var bStop = true;//判断运动是否停止
+			for(var attr in json){//attr代表属性,'width','height'.而json[attr]代表数值
+				// 1. 取得当前的值（可以是width，height，opacity等的值）
+				var objAttr = 0 ;
+				if(attr == 'opacity'){//获取当前数值
+					objAttr = Math.round(parseFloat( $(_this).style(attr) ) * 100);
+				}else{
+					objAttr = parseInt( $(_this).style(attr) );
+				}
+				// 2.计算运动速度
+				var jsonattr = parseFloat( json[attr] );
+				var speedConfig = (configjson && typeof ( configjson.speed ) != 'undefined') ? configjson.speed : 10;
+				var iSpeed = (jsonattr - objAttr) / speedConfig;	//(目标数值-当前数值)/10
+				iSpeed = iSpeed > 0 ? Math.ceil(iSpeed) : Math.floor(iSpeed);	//如果速度>0，则速度向上取整，如果小于0，则保留小数
+				// 3. 检测所有运动是否到达目标
+				//objAttr,当前点，json[attr]为目标点
+				if ( (iSpeed>0 && objAttr <= jsonattr) || (iSpeed<0 && objAttr >= jsonattr) ) {//如果有其中一项没有达到目标
+					bStop = false;
+				}
+				if (attr == "opacity") {
+					_this.style.filter = 'alpha(opacity:' + (objAttr + iSpeed) + ')';
+					_this.style.opacity = (objAttr + iSpeed) / 100;
+				} else {
+					_this.style[attr] = objAttr + iSpeed + 'px';	//赋值开始运动
+				}
+				configjson && typeof ( configjson.load  != 'undefined') && configjson.load.call(_this);//每次都执行
+				if (bStop) { // 表示所有运动都到达目标值
+					clearInterval(_this.animate);
+					configjson && typeof (configjson.end) != 'undefined' && configjson.end.call(_this);//传入参数，防止当前this错误
+				}
+			}//for
+		},30);
+	}//for
+	return this;//返回对象，进行链式操作
+};
+//停止动画,delay为延迟时间
+TQuery.prototype.stop = function(delay){
+	var stardelay = delay ? delay : 0;
+	setTimeout(function(){
+		clearInterval( $(this).elements[0].animate );
+	},stardelay);
+	return this;//返回对象，进行链式操作
+};
+//设置attr
+TQuery.prototype.attr = function(attr,value){
+	//attr不能是数字
+	if(arguments.length==2){//2个参数，设置属性
+		for(var k=0;k<this.length;k++){
+			if(this.elements[k][attr]){
+				this.elements[k][attr] = value;
+			}else{
+				this.elements[k].setAttribute(attr,value);
+			}
+		}
+	}else if(arguments.length==1){//1个参数
+		if( typeof(attr) == "object" && Object.prototype.toString.call(attr).toLowerCase() == "[object object]" && !attr.length ){//如果是json，则分别设置属性
+			for(var i=0;i<this.length;i++){
+				for(var j in attr){
+					if( this.elements[i][j] ){//如果属性是可以直接读取
+						this.elements[i][j] = attr[j];
+					}else{//如果是自定义属性
+						this.elements[i].setAttribute(j,attr[j]);
+					}
+				}
+			}
+		}else{//读取属性
+			return this.elements[0][attr] || this.elements[0].getAttribute(attr);
+		}
+	}
+	return this;//返回对象，进行链式操作
+};
+//hasClass
+TQuery.prototype.hasClass = function(obj,cName){
+	// ( \\s|^ ) 判断前面是否有空格 （\\s | $ ）判断后面是否有空格 两个感叹号为转换为布尔值 以方便做判断
+	return !! obj.className.match(new RegExp("(\\s|^)" + cName + "(\\s|$)"));
+};
+//添加class
+TQuery.prototype.addClass = function(cName){
+	for(var i=0;i<this.length;i++){
+		if (!this.hasClass(this.elements[i],cName)) {//如果不存在class
+			if( this.elements[i].className === null || this.elements[i].className === '' ){
+				this.elements[i].className = cName;
+			}else{
+				this.elements[i].className += " " + cName;
+				if(this.elements[i].className){
+
+				}
+			}
+		}
+	}
+	return this;//返回对象，进行链式操作
+};
+//移除class
+TQuery.prototype.removeClass = function(cName){
+	for(var i=0;i<this.length;i++){
+		if (this.hasClass(this.elements[i],cName)) {
+			this.elements[i].className = this.elements[i].className.replace(new RegExp("(\\s|^)" + cName + "(\\s|$)"), ""); // replace方法是替换 
+		}
+	}
+	return this;//返回对象，进行链式操作
+};
+//=============DOM节点操作
+//插入after，把选择到的元素，插入到obj的后面
+TQuery.prototype.insertAfter = function(obj){
+	var parent;
+	for(var i=0;i<this.length;i++){
+		parent = obj.parentNode;//插入位置的父元素
+		if(parent.lastChild == obj){//如果最后的节点是目标节点，直接添加
+			parent.appendChild(this.elements[i]);
+		}else{//如果不是，则插入在目标元素的下一个兄弟节点的前面，也就是目标元素的后面
+			parent.insertBefore(this.elements[i],obj.nextSibling);
+		}
+	}
+	return this;//返回对象，进行链式操作
+};
+//插入insertBefore，把选择到的元素，插入到obj的前面
+TQuery.prototype.insertBefore =function(obj){
+	for(var i=0;i<this.length;i++){
+		obj.parentNode.insertBefore(this.elements[i],obj);
+	}
+	return this;//返回对象，进行链式操作
+};
+//清空选中节点
+TQuery.prototype.empty = function(){
+	for(var i=0;i<this.length;i++){
+		this.value(' ');
+		this.text(' ');
+		this.html(' ');
+	}
+	return this;//返回对象，进行链式操作
+};
+//删除选中节点
+TQuery.prototype.remove = function(){
+	for(var i=0;i<this.length;i++){
+		this.elements[i].remove();
+	}
+	return this;//返回对象，进行链式操作
+};
+//设置innerHTML
+TQuery.prototype.html = function(setting){
+	if(setting){//设置
+		for(var i=0;i<this.length;i++){
+			this.elements[i].innerHTML = setting;
+		}
+		return this;
+	}
+	return this.elements[0].innerHTML;
+};
+//设置text
+TQuery.prototype.text = function(setting){
+	if(setting){//设置
+		for(var i=0;i<this.length;i++){
+			this.elements[i].innerText = this.elements[i].textContent = setting;
+		}
+		return this;
+	}
+	//读取
+	return this.elements[0].innerText || this.elements[0].textContent;
+};
+//设置value
+TQuery.prototype.value = function(setting){
+	if(setting){//设置
+		for(var i=0;i<this.length;i++){
+			this.elements[i].value = setting;
+		}
+		return this;
+	}
+	//读取
+	return this.elements[0].value;
+};
+
+
 //扩展插件
 TQuery.prototype.extend = function(name,fn){
 	TQuery.prototype[name] = fn;
 	return this;//返回对象，进行链式操作
 };
-//防止constructor被修改
+//=============输出调用==========
+////防止constructor被修改
 TQuery.prototype.constructor = TQuery;
-//输出调用
+//get,将TQuery对象转换成DOM对象,多个则返回数组
+TQuery.prototype.get = function(n){
+	n = n || 0;
+	if(n=='all' && this.length>1){//如果没有参数，并且多个，则返回数组
+		return this.elements;
+	}
+	return this.elements[n];
+};
 function $(tArg){
 	return new TQuery(tArg);
 }
 window.$ = window.TQuery = $;
-//========通用函数========
+//=============通用函数===========
 function addEvent(obj, type, fn){
 	return obj.addEventListener ?
 			obj.addEventListener(type, function(e){
@@ -1018,209 +974,4 @@ function getByClass(oParent,sClassName){
 	}
 	return result;
 }
-//===============系统对象上添加==============
-//字符串倒序
-String.prototype.reverse = function(){
-	return this.split('').reverse().join('');
-};
-//数组sum求和方法
-Array.prototype.sum = function(){
-	var result = 0;
-	for( var i=0;i<this.length;i++ ){
-		result += this[i];
-	}
-	return result;
-};
-//数组去重，不能比较DOM节点
-Array.prototype.unique = function(){
-   var a = {};//哈希表，用来存放不重复的数组
-   for (var i=0; i<this.length; i++) {
-	   var v = this[i];
-	   if (typeof(a[v]) == 'undefined'){
-			a[v] = 1;
-	   }
-   }
-   this.length=0;//清空数组
-   for (var k in a){//哈希表存放的不重复数据，存入数组中
-		this[this.length] = k;  //this.length = 0 , 1 , 2 ……
-   }
-   return this;
-};
-//删除指定位置的数组,n = (0,n)，可以是数字，可以是区间
-Array.prototype.del = function(n) {
-    if (n < 0) return this;
-	if(typeof n == 'object' && n.push()){//如果是数组（区间）
-		 return this.slice(0,n[0]).concat( this.slice( n[1]+1 , this.length) );
-	}
-    return this.slice(0, n).concat( this.slice(n + 1, this.length) );
-};
-//===============自定义对象==============
-//面向对象选项卡
-//使用方法 new TabSwitch('div1');
-/*
-	<div id="div1">
-		<input />
-		<input />
-		<input />
-		<div></div>
-		<div></div>
-		<div></div>
-	</div>
-结构：
-*/
-function TabSwitch(obj){
-	var _this = this;
-	//var div1 = document.getElementById(id);
-	var div1 = obj;
-	this.aBtn = div1.getElementsByTagName('input');
-	this.aDiv = div1.getElementsByTagName('div');
-	for(var i=0;i<this.aBtn.length;i++){
-		this.aBtn[i].index=i;
-		this.aBtn[i].onclick=function(){
-			_this.fnClick(this);
-		};
-	}
-}
-TabSwitch.prototype.fnClick = function(oBtn){
-	for(var j=0;j<this.aBtn.length;j++){
-		this.aBtn[j].className='';
-		this.aDiv[j].style.display='none';
-	}
-	oBtn.className='active';
-	this.aDiv[oBtn.index].style.display='block';
-};
-//拖拽
-//使用方法 new Drag($('press'),$('move'),{left:[100,200],top:[200,500]});(鼠标按住的目标，要移动的目标)
-/*
-var json = {
-			L:[100,300],
-			T:[200,500]
-			}
-*/
-function Drag(pressTarget,MoveTarget,json){
-	var _this = this;
-	this.disX = 0;
-	this.disY = 0;
-	if(json){
-		this.json = json;
-	}
-	this.MoveTarget = MoveTarget;
-	pressTarget.onmousedown = function(e){
-		_this.fnDown(e);
-		return false;//chrome,firefox去除文字选中
-	};
-}
-Drag.prototype.fnDown = function(e){//鼠标按下（未松开）
-	var ev = e || window.event;
-	var _this = this;
-	this.disX = e.clientX - this.MoveTarget.offsetLeft;
-	this.disY = e.clientY - this.MoveTarget.offsetTop;
-	if(this.MoveTarget.setCaptrue){//IE，解决文字选中
-		this.MoveTarget.onmousemove = function(ev){
-			_this.fnMove(ev);
-			_this.json.movefn();
-		};
-		this.MoveTarget.onmouseup = function(){
-			var this_ = this;
-			_this.fnUp(this_);
-		};
-		this.MoveTarget.setCaptrue();//添加事件捕获
-	}else{
-		document.onmousemove = function(e){
-			_this.fnMove(e);
-			if(_this.json.movefn){
-				_this.json.movefn();
-			}
-		};
-		document.onmouseup = function(){
-			var this_ = this;
-			_this.fnUp(this_);
-		};
-	}
-};
-Drag.prototype.fnMove = function(e){//鼠标移动，则div移动
-	var ev = e || window.event;
-	var L = this.json ? this.range(e.clientX - this.disX,this.json.L[0],this.json.L[1]) : (e.clientX - this.disX);
-	var T = this.json ? this.range(e.clientY - this.disY,this.json.T[0],this.json.T[1]) : (e.clientY - this.disY);
-	this.MoveTarget.style.left = L + 'px';
-	this.MoveTarget.style.top = T + 'px';
-};
-Drag.prototype.fnUp = function(this_){//鼠标松开，则停止
-		this_.onmousemove = null;
-		this_.onmouseup = null;
-		if( this_.setCaptrue ){
-			this_.releaseCapture();//释放捕获
-		}
-};
-Drag.prototype.range = function(iNow,iMin,iMax){
-	if(iNow>iMax){
-		return iMax;
-	}else if(iNow<iMin){
-		return iMin;
-	}else{
-		return iNow;
-	}
-};
-//拖拽改变大小
-//使用方法 new scale($('press'),$('move'),{width:[100,200],height:[200,500]});(鼠标按住的目标，要移动的目标)
-/*
-var json = {
-			width:[100,300],
-			height:[200,500]
-			}
-*/
-function Scale(pressTarget,MoveTarget,json){
-	if(json){
-		this.json = json;
-	}
-	this.MoveTarget = MoveTarget;
-	var _this = this;
-	pressTarget.onmousedown = function(e){
-		_this.onmousedownFn(e);
-		};
-}
-Scale.prototype.onmousedownFn = function(e){
-	var ev = e || window.event;
-	this.disX = e.clientX;
-	this.disY = e.clientY;
-	this.disW = this.MoveTarget.offsetWidth;
-	this.disH = this.MoveTarget.offsetHeight;
-	var _this = this;
-	document.onmousemove = function(ev){
-		_this.mouseoverFn(ev);
-		};
-	document.onmouseup = function(ev){
-		_this.mouseupFn(ev);
-		};
-};
-Scale.prototype.mouseoverFn = function(e){
-	var ev = e || window.event;
-	this.W = this.json ? this.range(ev.clientX - this.disX + this.disW,this.json.width[0],this.json.width[1]) : (ev.clientX - this.disX + this.disW);
-	this.H = this.json ? this.range(ev.clientY - this.disY + this.disH,this.json.height[0],this.json.height[1]) : (ev.clientY - this.disY + this.disH);
-	this.MoveTarget.style.width = this.W + 'px';
-	this.MoveTarget.style.height = this.H + 'px';
-};
-Scale.prototype.mouseupFn = function(){
-	document.onmousemove = null;
-	document.onmouseup = null;
-};
-Scale.prototype.range = function(iNow,iMin,iMax){
-	if(iNow>iMax){
-		return iMax;
-	}else if(iNow<iMin){
-		return iMin;
-	}else{
-		return iNow;
-	}
-};
-//===============库扩展==============
-
-$().extend('abc',function(){
-	alert('1');
-});
-//图片延迟加载
-$().extend('lazyImage',function(img){
-	$(img);
-});
-
 })(window,document);//传入window，避免过度寻找作用域链
