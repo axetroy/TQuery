@@ -1,0 +1,100 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>所有的小实例</title>
+<link rel="stylesheet" href="google-code-prettify/prettify.css">
+<script src="google-code-prettify/prettify.js"></script>
+<style>
+	*{margin:0;padding:0;list-style:none;border:none;}
+	a{color:#fff; text-decoration:none;}
+	#nav{width:80%;height:50px;margin:0 auto; text-align:center;background:#a3a3a3;line-height:30px;}
+	#nav ul li a{float:left;padding:10px 20px;background:#303030;margin:0 20px;min-width:50px;}
+	#nav ul li a:hover{background:#2B9795}
+	.wrap{width:100%;background:#665566;height:1000px;}
+	.wrap,#main{margin:0 auto;text-align:center}
+	#main{position:relative;width:80%;margin-top:20px;}
+	.contain-left{float:left;width:20%;background:#303030;text-align:left;}
+	.contain-left ul li{line-height:16px;padding:5px 0;margin:5px 0;}
+	.contain-left ul li:hover{background:#21867E}
+	.contain-right{float:right;width:80%;;}
+	.code textarea{width:100%;height:0;overflow:auto;display:none;}
+	.show #preview{width:100%;height:600px;}
+	.toggle{width:100%;height:20px;background:red}
+	.active{background:red}
+</style>
+</head>
+
+<body>
+<nav>
+	<div id="nav">
+    	<ul>
+        	<li><a href="#">首页</a></li>
+            <li><a href="#">HTML</a></li>
+            <li><a href="#">CSS</a></li>
+            <li><a href="#">JavaScript</a></li>
+            <li><a href="#">TQuery源码</a></li>
+        </ul>
+    </div>
+</nav>
+<div class="wrap">
+	<div id="main">
+    	<div class="contain-left">
+        	<ul>
+            	<li><a href="#" data-src="仿魅族商品页面.html">仿魅族商品页面</a></li>
+                <li><a href="#" data-src="自定义滚动条-上下.html">自定义滚动条</a></li>
+                <li><a href="#" data-src="chart表格-Bar.html">Bar</a></li>
+                <li><a href="#" data-src="chart表格-Doughnut.html">doughnut</a></li>
+                <li><a href="#" data-src="chart表格-Line.html">Line</a></li>
+                <li><a href="#" data-src="chart表格-Pie.html">Pie</a></li>
+                <li><a href="#" data-src="chart表格-PolarArea.html">PolarArea</a></li>
+                <li><a href="#" data-src="chart表格-Radar.html">Radar</a></li>
+            </ul>
+        </div>
+        <div class="contain-right">
+        	<div class="show">
+            	<iframe id="preview"></iframe>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="wrap">
+    <div class="code">
+        <div class="toggle"></div>
+        <textarea></textarea>
+    </div>
+</div>
+
+<script src="TQuery.js"></script>
+<script>
+$(function(){
+	//prettyPrint();
+	//$('.item').height( $(window).viewHeight()+'px' );
+	$('.contain-left li a').click(function(){
+		var ajaxUrl = $(this).custormAttr('data-src');
+		$().ajax(ajaxUrl,function(text){//ajax请求成功后
+			$('.code textarea').html(text);
+		})
+		$('#preview').custormAttr('src',ajaxUrl);
+		$('.contain-left li').attr('className','')
+		$(this).parent().attr('className','active');
+	});
+	//源码展开和收起
+	$('.toggle').toggle(function(){//源码展开
+		$('.code textarea').show().animate({height:500,opacity:100});
+	},function(){//源码收起
+		$('.code textarea').animate({height:0,opacity:0},function(){
+			//$(this).hide();
+		})
+	})
+})
+window.onloa=function(){
+	var a = b;
+	alert('1');
+
+
+}
+</script>
+
+</body>
+</html>
