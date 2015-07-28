@@ -95,11 +95,6 @@ function TQuery(tArg){
 				}
 			break;
 		case "object" : //对象
-			if( tArg.push ){//如果是数组
-
-			}else if(tArg === false){//如果是json
-
-			}
 			this.elements.push(tArg);
 			break;
 	}
@@ -156,20 +151,35 @@ TQuery.prototype.not = function(str){
 TQuery.prototype.filter = function(str){
 	var childElements = [];//存放临时数据
 	for(var i=0;i<this.length;i++){
+		var ele = this.elements[i];
 		switch(str.charAt(0)){
 			case '#':
-				if( $(this.elements[i]).attr('id') == str.substring(1) ){
-					childElements.push( this.elements[i] );
+				if( $(ele).attr('id') == str.substring(1) ){
+					childElements.push( ele );
 				}
 				break;
 			case '.':
-				if( this.hasClass(this.elements[i],str.substring(1)) ){//如果有class
-					childElements.push( this.elements[i] );
+				if( this.hasClass(ele,str.substring(1)) ){//如果有class
+					childElements.push( ele );
+				}
+				break;
+			case '[' :
+				var attrinfo = str.replace(/(\[+|\]+|\"|\"+])/g,'').split('=');
+				var attr = attrinfo[0];
+				var value = attrinfo[1];
+				if(attrinfo.length === 1){//只过滤属性，没有值
+					if( ele[attr] !==null || ele.getAttribute(attr) ){
+						childElements.push( ele );
+					}
+				}else if( attrinfo.length ==2 ){//过滤属性值
+					if( ele[attr]==value || ele.getAttribute(attr)==value ){
+						childElements.push( ele );
+					}
 				}
 				break;
 			default:
-				if( this.elements[i].tagName == str.toUpperCase() ){
-					childElements.push( this.elements[i] );
+				if( ele.tagName == str.toUpperCase() ){
+					childElements.push( ele );
 				}
 		}//switch
 	}//for
@@ -931,8 +941,6 @@ TQuery.prototype.value = function(setting){
 	//读取
 	return this.elements[0].value;
 };
-
-
 //扩展插件
 TQuery.prototype.extend = function(name,fn){
 	TQuery.prototype[name] = fn;
