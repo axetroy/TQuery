@@ -796,10 +796,14 @@ TQuery.prototype.animate = function(json,configjson){
 				} else {
 					_this.style[attr] = objAttr + iSpeed + 'px';	//赋值开始运动
 				}
-				configjson && typeof ( configjson.load  != 'undefined') && configjson.load.call(_this);//每次都执行
+				if( configjson && typeof configjson.load !='undefined' ){
+					configjson.load.call(_this);
+				}
 				if (bStop) { // 表示所有运动都到达目标值
 					clearInterval(_this.animate);
-					configjson && typeof (configjson.end) != 'undefined' && configjson.end.call(_this);//传入参数，防止当前this错误
+					if( configjson && typeof configjson.end != 'undefined' ){
+						configjson.end.call(_this);
+					}
 				}
 			}//for
 		},30);
@@ -945,6 +949,10 @@ TQuery.prototype.value = function(setting){
 TQuery.prototype.extend = function(name,fn){
 	TQuery.prototype[name] = fn;
 	return this;//返回对象，进行链式操作
+};
+//修改this
+TQuery.prototype.proxy = function(fn,_this){
+	fn.call(_this);
 };
 //=============输出调用==========
 ////防止constructor被修改
