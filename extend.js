@@ -1,4 +1,50 @@
 ;//===============库扩展==============
+function $arr(arr){
+	return new arryfn(arr);
+}
+function arrayfn(arr){
+	this.arr = arr;
+	this.length = arr.length;
+	return this;
+}
+arrayfn.prototype.sum = function(){
+	var result = 0;
+	var length = this.length;
+	for( var i=0;i<length;i++ ){
+		result += this.arr[i];
+	}
+	return result;
+};
+arrayfn.prototype.unique = function(){
+   var a = {};//哈希表，用来存放不重复的数组
+   for (var i=0; i<this.length; i++) {
+	   var v = this.arr[i];
+	   if (typeof(a[v]) == 'undefined'){
+			a[v] = 1;
+	   }
+   }
+   this.length=0;//清空数组
+   for (var k in a){//哈希表存放的不重复数据，存入数组中
+		this.arr[this.length] = k;  //this.length = 0 , 1 , 2 ……
+   }
+   return this;
+};
+//删除指定位置,
+//n为数组[0,5]…………
+arrayfn.prototype.del = function(n) {
+    if (n < 0) return this;
+	if(typeof n == 'object' && n.push()){//如果是数组（区间）
+		 return this.arr.slice(0,n[0]).concat( this.arr.slice( n[1]+1 , this.arr.length) );
+	}
+	this.arr = this.arr.slice(0, n).concat( this.arr.slice(n + 1, this.length) );
+    return this;
+};
+function $str(str){
+	return newstringfn(str);
+}
+function newstringfn(str){
+	
+}
 //=======系统对象上添加====
 //字符串倒序
 String.prototype.reverse = function(){
