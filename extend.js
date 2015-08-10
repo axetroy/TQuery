@@ -1,4 +1,24 @@
-;//===============库扩展==============
+//===============库扩展==============
+//监听
+$().extend("ob",function(){
+	var target = this.elements[0];
+	return new Ob(target);
+});
+function Ob(target){
+	this.MutationObserver = window.MutationObserver || window.WebKitMutationObserver || window.MozMutationObserver;
+	this.target = target;
+	return this;
+}
+Ob.prototype.observer = function(config,fn){
+	var MutationObserver = this.MutationObserver,
+		observer = new MutationObserver(function(mutations){
+			mutations.forEach(function(mutation) {
+					fn.call(this.target);
+			});
+		});
+	observer.observe(this.target, config);
+};
+
 function $arr(arr){
 	return new arryfn(arr);
 }

@@ -626,19 +626,18 @@ TQuery.prototype.hide = function(){
 	return this;//返回对象，进行链式操作
 };
 //Mutation Observer,DOM变动观察器，异步触发的
-//未完成
-TQuery.prototype.matation = function(options){
-	//new MutationObserver(callback)
-	var observer = new MutationObserver(function(record){
-		for(var n,i=0;i<record.length;i++){
-			 console.log(record[i].target);
-			}
+TQuery.prototype.matation = function(options,fn){
+	var MutationObserver,observer;
+	for( var i=0;i<this.length;i++){
+		MutationObserver = window.MutationObserver || window.WebKitMutationObserver || window.MozMutationObserver;
+		observer = new MutationObserver(function(mutations) {
+			mutations.forEach(function(mutation) {
+				fn.call(this.elements[i]);
+			});
 		});
-	var config = {
-		'childList': true,
-		'arrtibutes': true
-	};
-	observer.observe(this.elements[i],config);
+		observer.observe(this.elements[i], options);
+	}
+	return this;
 };
 //AJAX
 TQuery.prototype.ajax = function(url,SucessFn,FaildFn){
@@ -734,9 +733,11 @@ TQuery.prototype.size = function(attr){
 //设置css
 //$('').css('width',value)	//value>>>200||200px||20%，可以不带单位px，可以设置百分比
 TQuery.prototype.css = function(attr,value){
-	var type = /(width|left|top|bottom|right|margin|padding){1,}/ig;
-	var type2 = /height/ig;
-	if(arguments.length==2){//设置样式
+	var type = /^(width|left|top|bottom|right|line-height|font-size)+/ig;
+	var type2 = /^(height|margin|padding)+/ig;
+	var type3 = /\d+(px)/ig;
+	var type4 = /\:/ig;
+	if(arguments.length==2){//设置单个样式
 		if( type.test(attr) && value.indexOf('%')<0 ){
 			value = parseFloat(value).toFixed(2) + 'px';
 		}
@@ -745,17 +746,36 @@ TQuery.prototype.css = function(attr,value){
 		}
 	}else{//一个参数
 		if(typeof attr=="string"){//获取样式
-			return this.elements[0].currentStyle ? this.elements[0].currentStyle[attr] : getComputedStyle(this.elements[0])[attr];
+			if( type4.test(attr) ){//如果一长串字符串设置,background:#303030;font-size:20px;
+				for(var x=0;x<this.length;x++){
+					this.elements[x].style.cssText = attr;
+				}
+			}else{
+				return this.elements[0].currentStyle ? this.elements[0].currentStyle[attr] : getComputedStyle(this.elements[0])[attr];
+			}
 		}else if( typeof(attr) == "object" && Object.prototype.toString.call(attr).toLowerCase() == "[object object]" && !attr.length ){//json
+			//json设置样式
+			var css = "";
 			for(var i =0;i<this.length;i++){
+				//JS写法
+				// for(var k in attr){
+				// 	//k == 属性名字,width,height,opacity等
+				// 	//attr[k] == 属性值,300px,#303030等
+				// 	if((type.test(k) || type2.test(k)) && attr[k].indexOf('%')<0 ){//如果没有%符号
+				// 		attr[k] = parseFloat( attr[k] ).toFixed(2) + 'px';
+				// 	}
+				// 	this.elements[i].style[k] = attr[k];
+				// }
+				//纯CSS写法
 				for(var k in attr){
 					//k == 属性名字,width,height,opacity等
 					//attr[k] == 属性值,300px,#303030等
-					if((type.test(k) || type2.test(k)) && attr[k].indexOf('%')<0 ){//如果没有%符号
+					if((type.test(k) || type2.test(k)) && attr[k].indexOf('%')<0 ){//如果是带像素的属性，并且没有%符号
 						attr[k] = parseFloat( attr[k] ).toFixed(2) + 'px';
 					}
-					this.elements[i].style[k] = attr[k];
+					css += k+":"+attr[k]+";";
 				}
+				this.elements[i].style.cssText = css;
 			}
 		}
 	}
