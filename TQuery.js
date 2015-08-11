@@ -1,5 +1,10 @@
 ;(function(window,document){//自调用，避免全局污染
 //========构造函数========
+/**
+ * [TQuery 构造器]
+ * @param {[type]} tArg [selectors]，css选择器/function/object
+ * tip:高级选择器不支持IE8。
+ */
 function TQuery(tArg){
 	this.arg = tArg;//保存传进来的参数
 	this.elements = [];//用来保存选择的元素
@@ -113,13 +118,20 @@ function TQuery(tArg){
 	this.length = this.elements.length;
 }
 //========选择器和过滤器========
-//eq根据下标选择
+/**
+ * [eq 下标选择器]
+ * @param  {[type]} n [下标>0]默认0
+ * @return {[type]}   [this.elements[n]]
+ */
 TQuery.prototype.eq = function(n){
 	var m = n || 0;
 	this.length = 1;
 	return $(this.elements[m]);//作为对象存进this.elements，以便链式结构
 };
-//返回当前节点的index值
+/**
+ * [index 返回当前结点的index值]
+ * @return {[type]} [this.index]
+ */
 TQuery.prototype.index = function(){
 	var index = 0;
 	var aBrother = this.elements[0].parentNode.children;//获取兄弟节点
@@ -132,7 +144,12 @@ TQuery.prototype.index = function(){
 	}
 	return index;
 };
-//not过滤器,从元素集合中，剔除某些部分
+/**
+ * [not 从元素集合中，剔除某些部分]
+ * @param  {[type]} str [CSS选择器]
+ * @return {[type]}     [this]
+ * example $('ul li').not('.item')	从众多li中，删除class=item的项
+ */
 TQuery.prototype.not = function(str){
 	var childElements = [];//存放临时数据
 	for(var i=0;i<this.length;i++){
@@ -151,15 +168,18 @@ TQuery.prototype.not = function(str){
 				if( this.elements[i].tagName != str.toUpperCase() ){
 					childElements.push( this.elements[i] );
 				}
-		}//swicth
-	}//for
+		}
+	}
 	this.elements = childElements;
-	this.length = childElements.length;//返回新的长度
+	this.length = childElements.length;
 	return this;
 };
-//filter,从元素集合众，特选某些部分
-//支持id className tagName
-//$('ul li').filter('.item')	从众多li中，选出class=item的项
+/**
+ * [filter 从元素集合众，特选某些部分]
+ * @param  {[type]} str [CSS选择器]
+ * @return {[type]}     [this]
+ * example $('ul li').filter('.item')	从众多li中，选出class=item的项
+ */
 TQuery.prototype.filter = function(str){
 	var childElements = [];//存放临时数据
 	for(var i=0;i<this.length;i++){
@@ -193,15 +213,18 @@ TQuery.prototype.filter = function(str){
 				if( ele.tagName == str.toUpperCase() ){
 					childElements.push( ele );
 				}
-		}//switch
-	}//for
+		}
+	}
 	this.elements = childElements;
-	this.length = childElements.length;//返回新的长度
+	this.length = childElements.length;
 	return this;
 };
-//find选择器，选择子集元素包含  id class tagName attr
-//支持id className tagName attribute
-//$('ul').find('li'),$('ul').find('[data-src]')
+/**
+ * [find 在已有的元素中，选择子节点]
+ * @param  {[type]} str [CSS选择器],IE8下，支持id，class，tagName，attr
+ * @return {[type]}     [this]
+ * example $('ul').find('li'),$('ul').find('[data-src]')
+ */
 TQuery.prototype.find = function(str){
 	var childElements = [];//存放临时数据
 	for(var i=0;i<this.length;i++){
@@ -256,11 +279,14 @@ TQuery.prototype.find = function(str){
 		}
 	}
 	this.elements = childElements;
-	this.length = childElements.length;//返回新的长度
+	this.length = childElements.length;
 	return this;
 };
-//add，将元素添加到已有的合集,去掉重复项
-//$('p').css('width','500').add('span').css('display','block');
+/**
+ * [add 新增DOM元素到已有的集合]
+ * @param {[type]} str [CSS选择器]
+ * example $('p').css('width','500').add('span').css('display','block');
+ */
 TQuery.prototype.add = function(str){
 	var newTQ = $(str);//先获取元素
 	var newTQLength = newTQ.length;
@@ -276,12 +302,14 @@ TQuery.prototype.add = function(str){
 			temps.push( v );
 		}
 	}
-	//this.elements = temps.unique();//重复的DOM节点去重
 	this.elements = temps;
 	this.length = this.elements.length;//生成新的长度
 	return this;//返回对象
 };
-//选择当前所选元素，第一个的父节点
+/**
+ * [parent 当前所选元素[0]的第一个父节点]
+ * @return {[type]} [this]
+ */
 TQuery.prototype.parent = function(){
 	var firstNode = this.elements[0].parentNode;
 	this.elements.length = 0;//清空
@@ -289,7 +317,10 @@ TQuery.prototype.parent = function(){
 	this.length = this.elements.length;//重置长度
 	return this;
 };
-//parents选择当前所选元素，所有的上一个父节点，不重复
+/**
+ * [parents 被选元素的上一级父节点，不重复]
+ * @return {[type]} [this]
+ */
 TQuery.prototype.parents = function(){
 	var temps = [];//存储所有的父节点
 	var a = {};
@@ -304,7 +335,10 @@ TQuery.prototype.parents = function(){
 	this.length = this.elements.length;//重置长度
 	return this;
 };
-//children选择当前所选元素，所有的下一个子节点，不重复
+/**
+ * [children 被选元素的下一级子节点，不重复]
+ * @return {[type]} [this]
+ */
 TQuery.prototype.children = function(){
 	var childElements = [];//存放所有的子节点
 	var thischildren;
@@ -332,7 +366,10 @@ TQuery.prototype.children = function(){
 	this.length = this.elements.length;
 	return this;
 };
-//返回被选元素的上一个兄弟节点/同胞元素
+/**
+ * [prev 选择被选元素，所有的上一个兄弟节点]
+ * @return {[type]} [description]
+ */
 TQuery.prototype.prev = function(){
 	var temps = [];
 	for(var i=0;i<this.length;i++){
@@ -351,7 +388,10 @@ TQuery.prototype.prevAll = function(){
 	this.siblings();
 	return this;
 };
-//返回被选元素的下一个兄弟节点/同胞元素
+/**
+ * [next 选择被选元素，所有的下一个兄弟节点]
+ * @return {Function} [description]
+ */
 TQuery.prototype.next = function(){
 	var temps = [];
 	for(var i=0;i<this.length;i++){
@@ -378,7 +418,11 @@ TQuery.prototype.nextAll = function(){
 	}
 	return this;
 };
-//返回被选元素所有同胞元素/过滤同胞元素
+/**
+ * [siblings 选取/过滤所有兄弟节点]
+ * @param  {[type]} str [css选择器字符]，如果存在，则过滤
+ * @return {[type]}     [description]
+ */
 TQuery.prototype.siblings = function(str){
 	var temps = [];
 	var parentNode = this.parents().elements;
@@ -392,31 +436,58 @@ TQuery.prototype.siblings = function(str){
 	}
 	this.elements = temps;
 	this.length = this.elements.length;
-	if(str){//如果有参数传入，则过滤同胞元素
+	//如果有参数传入，则过滤同胞元素
+	if(str){
 		this.filter( str );
 	}
 	return this;
 };
 //将所选的元素集合，缩短至(n,m)之间
+/**
+ * [slice 将所选的元素集合，缩短至(n,m)之间]
+ * @param  {[type]} n [起始位置]
+ * @param  {[type]} m [终止位置]
+ * @return {[type]}   [this]
+ */
 TQuery.prototype.slice = function(n,m){
 	if(n<0 || m>this.length) return;//超出范围
 	var temps = this.elements;
 	var newarr = temps.slice(n,m+1);
-	console.log( newarr );
 	this.elements = newarr;
 	this.length = this.elements.length;
 	return this;
 };
 //========事件操作========
-//each循环遍历
+/**
+ * [ready ready后执行]
+ * @param  {Function} fn [函数]
+ * @return {[type]}      [this]
+ */
+TQuery.prototype.ready = function(fn){
+	for(var i=0;i<this.length;i++){
+		$(this.elements[i]).bind('onload',function(){
+			fn.call(this.elements[i]);
+		});
+	}
+	return this;
+};
+/**
+ * [each 为匹配的元素，循环遍历]
+ * @param  {Function} fn [函数]
+ * @return {[type]}      [this]
+ */
 TQuery.prototype.each = function(fn){
 	for(var i=0;i<this.length;i++){
 		var _this = this.elements[i];
 		fn.call(_this);
 	}
-	return this;//返回对象
+	return this;
 };
-//触发所选元素的指定事件,只能触发DOM1级事件
+/**
+ * [trigger 触发所选元素的指定事件,目前只能触发DOM1级事件]
+ * @param  {[type]} type [事件类型]
+ * @return {[type]}      [this]
+ */
 TQuery.prototype.trigger = function(type){
 	var fn = this.elements[0]['on' + type ] ;
 	var _this = this.elements[0];//修正this不正确的问题
@@ -427,23 +498,35 @@ TQuery.prototype.trigger = function(type){
 	}
 	return this;
 };
-//click事件
+/**
+ * [click DOM2级click事件]
+ * @param  {Function} fn [函数]
+ * @return {[type]}      [this]
+ */
 TQuery.prototype.click = function(fn){
 	var length = this.elements.length;
 	for(var i=0;i<length;i++){
 		addEvent(this.elements[i],'click',fn);
 	}
-	return this;//返回对象，进行链式操作
+	return this;
 };
-//事件的绑定与删除
+/**
+ * [bind DOM2级事件绑定]
+ * @param  {[type]}   type [事件类型]
+ * @param  {Function} fn   [函数]
+ * @return {[type]}        [this]
+ */
 TQuery.prototype.bind = function(type,fn){
-	if(arguments.length==1){//如果只传一个json参数e
+	//如果只传一个json参数e
+	if(arguments.length==1){
 		for(var k=0;k<this.length;k++){
 			for(var attr in type){
 				addEvent(this.elements[k],attr,type[attr]);
 			}
 		}
-	}else{//如果传两个参数，则统一执行一个e
+	}
+	//如果传两个参数，则多个事件统一执行一个e
+	else{
 		var events = type.split(' ');
 		var eventsLength = events.length;
 		for(var i=0;i<this.length;i++){
@@ -454,24 +537,37 @@ TQuery.prototype.bind = function(type,fn){
 			}
 		}
 	}
-	return this;//返回对象，进行链式操作
+	return this;
 };
-//解除事件绑定，匿名函数无法解除绑定
+/**
+ * [unbind 解除绑定DOM2级事件]，匿名函数无法解除
+ * @param  {[type]}   e  [事件类型]
+ * @param  {Function} fn [执行的函数]
+ * @return {[type]}      [this]
+ */
 TQuery.prototype.unbind = function(e,fn){
 	for(var i=0;i<this.length;i++){
 		removeEvent(this.elements[i],e,fn);
 	}
-	return this;//返回对象，进行链式操作
+	return this;
 };
-//类似onload,onmouseover等
+/**
+ * [on DOM0级事件]
+ * @param  {[type]}   type [事件类型/json]
+ * @param  {Function} fn   [执行的函数]
+ * @return {[type]}        [this]
+ */
 TQuery.prototype.on = function(type,fn){
-	if(arguments.length==1){//如果只传一个json参数
+	//如果只传一个json参数
+	if(arguments.length==1){
 		for(var k=0;k<this.length;k++){
 			for(var attr in type){
 				this.elements[k][ 'on'+attr ] = type[attr];
 			}
 		}
-	}else{//如果传两个参数e,fn
+	}
+	//如果传两个参数e,fn
+	else{
 		var events = type.split(' ');//获取每个事件
 		var eventsLength = events.length;
 		for(var i=0;i<this.length;i++){
@@ -482,14 +578,19 @@ TQuery.prototype.on = function(type,fn){
 			}
 		}
 	}
-	return this;//返回对象，进行链式操作
+	return this;
 };
-//one执行一次操作
+/**
+ * [one 执行一次操作]
+ * @param  {[type]}   e  [事件类型]
+ * @param  {Function} fn [执行的函数]
+ * @return {[type]}      [this]
+ */
 TQuery.prototype.one = function(e,fn){
 	var _this = this;
 	for(var i=0;i<this.length;i++){
 		this.on(e,function(){
-			fn.call(_this);//解决匿名函数this指针不正确的问题
+			fn.call(_this);
 			var es = e.split(' ');
 			var j=0;
 			while(j<es.length){
@@ -498,15 +599,13 @@ TQuery.prototype.one = function(e,fn){
 			}
 		});
 	}
-	return this;//返回对象，进行链式操作
+	return this;
 };
-//设置hover
-//配置：json{
-//	'over':overfn(),
-//	'out':outfn(),
-//	'overDelay':500		//延迟执行overfn()		可选项，默认为0，单位ms
-//	'outDelay':1000		//延迟执行outfn()
-//}
+/**
+ * [hover hover属性]
+ * @param  {[type]} json [out(),outDelay,over(),overDelay],delay默认为0
+ * @return {[type]}      [this]
+ */
 TQuery.prototype.hover = function(json){
 	if( typeof json.overDelay=='undefined' ){
 		json.overDelay = 0;
@@ -530,9 +629,13 @@ TQuery.prototype.hover = function(json){
 			},json.outDelay);
 		}
 	});
-	return this;//返回对象，进行链式操作
+	return this;
 };
-//点击开关toggle
+/**
+ * [toggle 点击开关toggle]
+ * @param  {[type]} fn1,fn2,fn3,fn4…… [一次循环执行传入进来的函数]
+ * @return {[type]} [this]
+ */
 TQuery.prototype.toggle = function(){
 	var _arguments = arguments;
 	var	length = _arguments.length;
@@ -543,12 +646,17 @@ TQuery.prototype.toggle = function(){
 			_arguments[count++%length].call(_this);//执行	，解决this错误的问题
 		});
 	}
-	return this;//返回对象，进行链式操作
+	return this;
 };
-// //鼠标滚轮滚动
-// IE			attachEvent				mousewheel				wheelDelta		滚轮下e.wheelDelta<0
-// firefox		addEventListener		DOMMouseScroll			detail			滚轮下e.detail>0
-// chrome		addEventListener		mousewheel				wheelDelta		滚轮下e.wheelDelta<0
+
+/**
+ * [mouseScroll 鼠标滚轮滚动事件]
+ * @param  {[type]} json [up:向上滚动触发的事件,down:向下滚动触发的事件]
+ * @return {[type]}      [this]
+ *  IE			attachEvent				mousewheel				wheelDelta		滚轮下e.wheelDelta<0
+	firefox		addEventListener		DOMMouseScroll			detail			滚轮下e.detail>0
+	chrome		addEventListener		mousewheel				wheelDelta		滚轮下e.wheelDelta<0
+ */
 TQuery.prototype.mouseScroll = function(json){
 	this.bind('mousewheel DOMMouseScroll',function(e){
 		if(e.wheelDelta){//chrome,ie
@@ -565,9 +673,14 @@ TQuery.prototype.mouseScroll = function(json){
 			}
 		}
 	});
-	return this;//返回对象，进行链式操作
+	return this;
 };
-//scroll到某一位置，或获取滚动条位置
+/**
+ * [scrollTop 页面滚动到某一位置/获取滚动条位置]
+ * @param  {[type]} target [目标点]
+ * @param  {[type]} endFn  [回调函数]
+ * @return {[type]}        [this]
+ */
 TQuery.prototype.scrollTop = function(target,endFn){
 	if(target!==0 && !target){//没有参数，则读取
 		var scrollTop = this.doc.body.scrollTop || this.doc.documentElement.scrollTop;
@@ -594,7 +707,13 @@ TQuery.prototype.scrollTop = function(target,endFn){
 	},20);
 	return this;//返回对象，进行链式操作
 };
-//scroll到顶部或底部
+/**
+ * [scroll 页面滚动到顶部或底部]
+ * @param  {[type]} dir   [方向]，dir>0，向上滚，dir<0，向下滚
+ * @param  {[type]} step  [每次步长]默认10px
+ * @param  {[type]} endFn [回调函数]
+ * @return {[type]}       [this]
+ */
 TQuery.prototype.scroll = function(dir,step,endFn) { //obj随意，dir>0往上滚，dir<0往下滚
 	var step1 = step || 10;
 	clearInterval(this.doc.timerScroll);
@@ -602,7 +721,8 @@ TQuery.prototype.scroll = function(dir,step,endFn) { //obj随意，dir>0往上�
 	var speed;
 	this.doc.timerScroll = setInterval(function() {
 		var position;
-		if (dir == 'up') { //往上滚动
+		//往上滚动
+		if (dir == 'up') { 
 			speed = ($(this).size('scrollTop') / step1) + 1;
 			position = $(this).size('scrollTop') - speed;
 			if (position <= 0) { //如果滚到顶部
@@ -610,7 +730,9 @@ TQuery.prototype.scroll = function(dir,step,endFn) { //obj随意，dir>0往上�
 				endFn && endFn();
 				clearInterval(_this.doc.timerScroll);
 			}
-		}else if(dir == 'down'){ //往下滚动
+		}
+		//往下滚动
+		else if(dir == 'down'){ 
 			speed = (($(this).size('scrollHeight') - $(this).size('scrollTop') - $(this).size('clientHeight')) / step) + 1;
 			position = $(this).size('scrollTop') + speed;
 			if (position + $(this).size('clientHeight') >= $(this).size('scrollHeight')) { //如果滚到底部
@@ -621,23 +743,35 @@ TQuery.prototype.scroll = function(dir,step,endFn) { //obj随意，dir>0往上�
 		}
 		_this.doc.body.scrollTop = _this.doc.documentElement.scrollTop = position;
 	}, 20);
-	return this;//返回对象，进行链式操作
+	return this;
 };
 //show
+/**
+ * [show 显示所选元素]
+ * @return {[type]} [this]
+ */
 TQuery.prototype.show = function(){
 	for(var i=0;i<this.length;i++){
 		this.elements[i].style.display = 'block';
 	}
-	return this;//返回对象，进行链式操作
+	return this;
 };
-//hide
+/**
+ * [hide 隐藏所选元素]
+ * @return {[type]} [this]
+ */
 TQuery.prototype.hide = function(){
 	for(var i=0;i<this.length;i++){
 		this.elements[i].style.display = 'none';
 	}
-	return this;//返回对象，进行链式操作
+	return this;
 };
-//Mutation Observer,DOM变动观察器，异步触发的
+/**
+ * [mutation DOM变动观察器,监听所选择的元素]
+ * @param  {[type]}   options [配置项{}]
+ * @param  {Function} fn      [执行的函数]
+ * @return {[type]}           [this]
+ */
 TQuery.prototype.mutation = function(options,fn){
 	var MutationObserver,observer;
 	for( var i=0;i<this.length;i++){
@@ -651,7 +785,13 @@ TQuery.prototype.mutation = function(options,fn){
 	}
 	return this;
 };
-//AJAX
+/**
+ * [ajax 异步请求]
+ * @param  {[type]} url      [请求地址]
+ * @param  {[type]} SucessFn [请求成功执行]
+ * @param  {[type]} FaildFn  [请求失败执行]
+ * @return {[type]}          [null]
+ */
 TQuery.prototype.ajax = function(url,SucessFn,FaildFn){
 	/*
 		1，实例化对XMLHttpRequese对象
@@ -684,7 +824,11 @@ TQuery.prototype.ajax = function(url,SucessFn,FaildFn){
 	};
 };
 //==========尺寸size========
-//获取DOM/window/document的width/height,单位px带不带都行
+/**
+ * [width 设置/读取DOM节点的width/height]
+ * @param  {[type]} setting [设置值]，可以不带单位px
+ * @return {[type]}         [读取值/this]
+ */
 TQuery.prototype.width = function(setting){
 	if(!setting && this.elements[0] instanceof Object && (this.elements[0].alert || this.elements[0].body) ){//如果是window，或document
 		return this.doc.body.scrollWidth> this.doc.documentElement.scrollWidth ? this.doc.body.scrollWidth : this.doc.documentElement.scrollWidth;//获取带padding和margin的值
@@ -709,7 +853,11 @@ TQuery.prototype.height = function(setting){
 		return this.elements[0].offsetHeight || parseFloat( this.style('height') );//获取高度
 	}
 };
-//获取DOM的top/left
+/**
+ * [top 设置/读取DOM节点的top/left]
+ * @param  {[type]} setting [top/left的值]
+ * @return {[type]}         [this/读取值]
+ */
 TQuery.prototype.top = function(setting){
 	if(setting){
 		this.css('top',setting);
@@ -724,32 +872,48 @@ TQuery.prototype.left = function(setting){
 	}
 	return parseInt( this.elements[0].offsetLeft );
 };
-//获取可视区域宽高
+/**
+ * [viewWidth/viewHeight 获取可视区域宽高]
+ * @return {[type]} [可视区域宽高]
+ */
 TQuery.prototype.viewWidth = function(){
 	return this.doc.body.clientWidth<this.doc.documentElement.clientWidth ? this.doc.body.clientWidth : this.doc.documentElement.clientWidth;//取较小值
 };
 TQuery.prototype.viewHeight = function(){
 	return this.doc.body.clientHeight<this.doc.documentElement.clientHeight ? this.doc.body.clientHeight : this.doc.documentElement.clientHeight;//取较小值
 };
-//返回计算后的style样式，带单位
+/**
+ * [style 返回计算后的style样式，带单位]
+ * @param  {[type]} attr [style属性]
+ * @return {[type]}      [style属性值]
+ */
 TQuery.prototype.style = function(attr){
 	//IE下，如果宽高设置为百分比，则返回也是百分比。
 	return this.elements[0].currentStyle ? this.elements[0].currentStyle[attr] : getComputedStyle(this.elements[0])[attr];
 };
-//返回个BOM的尺寸
+/**
+ * [size 返回个BOM的尺寸]
+ * @param  {[type]} attr [BOM属性]
+ * @return {[type]}      [BOM属性值]
+ */
 TQuery.prototype.size = function(attr){
 	return this.doc.documentElement[attr] ? this.doc.documentElement[attr] : this.doc.body[attr];
 };
 
 //===========属性attribute设置========
-//设置css
-//$('').css('width',value)	//value>>>200||200px||20%，可以不带单位px，可以设置百分比
+/**
+ * [css 设置/读取css样式]
+ * @param  {[type]} attr  [style属性/json]，可以不带单位px，支持设置百分比%，纯CSS写法。
+ * @param  {[type]} value [style属性值]，如果不存在，则读取样式
+ * @return {[type]}       [style属性值/this]
+ */
 TQuery.prototype.css = function(attr,value){
 	var type = /^(width|left|top|bottom|right|line-height|font-size)+/ig;
 	var type2 = /^(height|margin|padding)+/ig;
 	var type3 = /\d+(px)/ig;
 	var type4 = /\:/ig;
-	if(arguments.length==2){//设置单个样式
+	if(arguments.length==2){//两个参数
+		//设置
 		if( type.test(attr) && value.indexOf('%')<0 ){
 			value = parseFloat(value).toFixed(2) + 'px';
 		}
@@ -758,11 +922,14 @@ TQuery.prototype.css = function(attr,value){
 		}
 	}else{//一个参数
 		if(typeof attr=="string"){//获取样式
-			if( type4.test(attr) ){//如果一长串字符串设置,background:#303030;font-size:20px;
+			//设置,background:#303030;font-size:20px;
+			if( type4.test(attr) ){
 				for(var x=0;x<this.length;x++){
 					this.elements[x].style.cssText = attr;
 				}
-			}else{
+			}
+			//读取
+			else{
 				return this.elements[0].currentStyle ? this.elements[0].currentStyle[attr] : getComputedStyle(this.elements[0])[attr];
 			}
 		}else if( typeof(attr) == "object" && Object.prototype.toString.call(attr).toLowerCase() == "[object object]" && !attr.length ){//json
@@ -791,11 +958,14 @@ TQuery.prototype.css = function(attr,value){
 			}
 		}
 	}
-	return this;//返回对象，进行链式操作
+	return this;
 };
-//设置动画
-//json表示要变化的属性，configjson表示动画过程/结束要执行的函数,以及速度参数
-//目前不支持百分比，可以不带单位px,opacity单位100制
+/**
+ * [animate 设置动画]
+ * @param  {[type]} json       [要变动的属性:属性值],可以不带单位px，不支持百分比%，opacity单位100制
+ * @param  {[type]} configjson [load:每次变动执行,end:动画结束后执行,speed:每次变化的速度]
+ * @return {[type]}            [this]
+ */
 TQuery.prototype.animate = function(json,configjson){
 	//如果两个参数.animate('width','300');
 	for(var i=0;i<this.length;i++){
@@ -837,22 +1007,30 @@ TQuery.prototype.animate = function(json,configjson){
 						configjson.end.call(_this);
 					}
 				}
-			}//for
+			}
 		},30);
-	}//for
-	return this;//返回对象，进行链式操作
+	}
+	return this;
 };
-//停止动画,delay为延迟时间
+/**
+ * [stop 停止animate动画]
+ * @param  {[type]} delay [延迟时间]
+ * @return {[type]}       [this]
+ */
 TQuery.prototype.stop = function(delay){
 	var stardelay = delay ? delay : 0;
 	setTimeout(function(){
 		clearInterval( $(this).elements[0].animate );
 	},stardelay);
-	return this;//返回对象，进行链式操作
+	return this;
 };
-//设置attr
+/**
+ * [attr 设置/读取属性]
+ * @param  {[type]} attr  [属性名称]>>>>字符串或json
+ * @param  {[type]} value [属性值]>>>>>>如果不存在，则读取属性
+ * @return {[type]}       [读取值/this]
+ */
 TQuery.prototype.attr = function(attr,value){
-	//attr不能是数字
 	if(arguments.length==2){//2个参数，设置属性
 		for(var k=0;k<this.length;k++){
 			if(this.elements[k][attr]){
@@ -862,6 +1040,7 @@ TQuery.prototype.attr = function(attr,value){
 			}
 		}
 	}else if(arguments.length==1){//1个参数
+		//JSON，设置属性
 		if( typeof(attr) == "object" && Object.prototype.toString.call(attr).toLowerCase() == "[object object]" && !attr.length ){//如果是json，则分别设置属性
 			for(var i=0;i<this.length;i++){
 				for(var j in attr){
@@ -872,18 +1051,28 @@ TQuery.prototype.attr = function(attr,value){
 					}
 				}
 			}
-		}else{//读取属性
+		}
+		//读取属性
+		else{
 			return this.elements[0][attr] || this.elements[0].getAttribute(attr);
 		}
 	}
-	return this;//返回对象，进行链式操作
+	return this;
 };
-//hasClass
+/**
+ * [hasClass 判断是否存在class]
+ * @param  {[type]}  obj   [判断目标]
+ * @param  {[type]}  cName [class]
+ * @return {Boolean}       [true/false]
+ */
 TQuery.prototype.hasClass = function(obj,cName){
 	// ( \\s|^ ) 判断前面是否有空格 （\\s | $ ）判断后面是否有空格 两个感叹号为转换为布尔值 以方便做判断
 	return !! obj.className.match(new RegExp("(\\s|^)" + cName + "(\\s|$)"));
 };
-//添加class
+/**
+ * [addClass 添加class]
+ * @param {[type]} cName [class]
+ */
 TQuery.prototype.addClass = function(cName){
 	for(var i=0;i<this.length;i++){
 		if (!this.hasClass(this.elements[i],cName)) {//如果不存在class
@@ -899,7 +1088,11 @@ TQuery.prototype.addClass = function(cName){
 	}
 	return this;//返回对象，进行链式操作
 };
-//移除class
+/**
+ * [removeClass 移除class]
+ * @param  {[type]} cName [class]
+ * @return {[type]}       [this]
+ */
 TQuery.prototype.removeClass = function(cName){
 	for(var i=0;i<this.length;i++){
 		if (this.hasClass(this.elements[i],cName)) {
@@ -908,8 +1101,12 @@ TQuery.prototype.removeClass = function(cName){
 	}
 	return this;//返回对象，进行链式操作
 };
-//=============DOM节点操作
-//插入after，把选择到的元素，插入到obj的后面
+//===========DOM节点操作========
+/**
+ * [insertAfter 把选择的元素，插入到obj的后面]
+ * @param  {[type]} obj [插入的位置]
+ * @return {[type]}     [this]
+ */
 TQuery.prototype.insertAfter = function(obj){
 	var parent,
 		oFragment = document.createDocumentFragment();//创建文档碎片;
@@ -924,7 +1121,11 @@ TQuery.prototype.insertAfter = function(obj){
 	}
 	return this;//返回对象，进行链式操作
 };
-//插入insertBefore，把选择到的元素，插入到obj的前面
+/**
+ * [insertBefore 把选择的元素，插入到obj的前面]
+ * @param  {[type]} obj [插入的位置]
+ * @return {[type]}     [this]
+ */
 TQuery.prototype.insertBefore =function(obj){
 	var oFragment = document.createDocumentFragment();//创建文档碎片
 	for(var i=0;i<this.length;i++){
@@ -933,23 +1134,33 @@ TQuery.prototype.insertBefore =function(obj){
 	obj.parentNode.insertBefore(oFragment,obj);
 	return this;//返回对象，进行链式操作
 };
-//清空选中节点
+/**
+ * [empty 清空选中DOM节点的文本内容]
+ * @return {[type]} [this]
+ */
 TQuery.prototype.empty = function(){
 	for(var i=0;i<this.length;i++){
 		this.value(' ');
 		this.text(' ');
 		this.html(' ');
 	}
-	return this;//返回对象，进行链式操作
+	return this;
 };
-//删除选中节点
+/**
+ * [remove 删除所有选中的DOM]
+ * @return {[type]} [this]
+ */
 TQuery.prototype.remove = function(){
 	for(var i=0;i<this.length;i++){
 		this.elements[i].remove();
 	}
-	return this;//返回对象，进行链式操作
+	return this;
 };
-//设置innerHTML
+/**
+ * [html 设置/读取DOM节点的内容，带标签]
+ * @param  {[type]} setting [设置的值]
+ * @return {[type]}         [读取值/this]
+ */
 TQuery.prototype.html = function(setting){
 	if(setting){//设置
 		for(var i=0;i<this.length;i++){
@@ -959,9 +1170,14 @@ TQuery.prototype.html = function(setting){
 	}
 	return this.elements[0].innerHTML;
 };
-//设置text
+/**
+ * [text 设置/读取文本内容]
+ * @param  {[type]} setting [设置的值]
+ * @return {[type]}         [读取值/this]
+ */
 TQuery.prototype.text = function(setting){
-	if(setting){//设置
+	//设置
+	if(setting){
 		for(var i=0;i<this.length;i++){
 			this.elements[i].innerText = this.elements[i].textContent = setting;
 		}
@@ -970,9 +1186,14 @@ TQuery.prototype.text = function(setting){
 	//读取
 	return this.elements[0].innerText || this.elements[0].textContent;
 };
-//设置value
-TQuery.prototype.value = function(setting){
-	if(setting){//设置
+/**
+ * [val 设置/读取value]
+ * @param  {[type]} setting [设置的值]
+ * @return {[type]}         [读取值/this]
+ */
+TQuery.prototype.val = function(setting){
+	//设置
+	if(setting){
 		for(var i=0;i<this.length;i++){
 			this.elements[i].value = setting;
 		}
@@ -981,19 +1202,39 @@ TQuery.prototype.value = function(setting){
 	//读取
 	return this.elements[0].value;
 };
-//扩展插件
+/**
+ * [extend 扩展插件]
+ * @param  {[type]}   name [插件名字]
+ * @param  {Function} fn   [执行的函数]
+ * @return {[type]}        [this]
+ * example: 
+ * 		$().extend('drag',function(){
+ * 			console.log("drag")
+ *    	})
+ * user：$().drag();	结果>>>>>>>"drag"
+ */
 TQuery.prototype.extend = function(name,fn){
 	TQuery.prototype[name] = fn;
-	return this;//返回对象，进行链式操作
+	return this;
 };
-//修改this
+/**
+ * [proxy 事件代理，修改this]
+ * @param  {Function} fn    [要修改的函数]
+ * @param  {[type]}   _this [要替换的this（代理人）]
+ * @return {[type]}         [this]
+ */
 TQuery.prototype.proxy = function(fn,_this){
 	fn.call(_this);
+	return this;
 };
 //=============输出调用==========
 ////防止constructor被修改
 TQuery.prototype.constructor = TQuery;
-//get,将TQuery对象转换成DOM对象,多个则返回数组
+/**
+ * [get 将TQuery转换成DOM对象]
+ * @param  {[type]} n [要选择第n个]
+ * @return {[type]}   [第n个/所有]
+ */
 TQuery.prototype.get = function(n){
 	n = n || 0;
 	if(n=='all' && this.length>1){//如果没有参数，并且多个，则返回数组
@@ -1010,7 +1251,7 @@ function addEvent(obj, type, fn){
 	return obj.addEventListener ?
 			obj.addEventListener(type, function(e){
 				var ev = window.event ? window.event : (e ? e : null);
-				ev.target = ev.target || ev.srcElement;
+				// ev.target = ev.target || ev.srcElement;
 				if( fn.call(obj,ev)===false ){//回掉函数为false，则阻止默认时间
 					e.cancelBubble = true;//阻止冒泡
 					e.preventDefault();//chrome，firefox下阻止默认事件
@@ -1019,7 +1260,7 @@ function addEvent(obj, type, fn){
 			 :
 			obj.attachEvent('on' + type, function(e){
 				//fn.call(obj,e);//解决IE8下，this是window的问题
-				var ev = window.event ? window.event : (e ? e : null);
+				// var ev = window.event ? window.event : (e ? e : null);
 				ev.target = ev.target || ev.srcElement;
 				if(fn.call(obj,ev)===false ){
 					e.cancelBubble = true;//阻止冒泡
@@ -1040,4 +1281,4 @@ function getByClass(oParent,sClassName){
 	}
 	return result;
 }
-})(window,document);//传入window，避免过度寻找作用域链
+})(window,document);

@@ -1,3 +1,4 @@
+(function(){
 //===============库扩展==============
 /**
  * 数组对象
@@ -280,3 +281,7 @@ Ob.prototype.observer = function(config,fn){
 		});
 	observer.observe(this.target, config);
 };
+
+
+
+})($);
