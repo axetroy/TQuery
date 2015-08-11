@@ -1,114 +1,97 @@
 //===============库扩展==============
-//监听
-$().extend("ob",function(){
-	var target = this.elements[0];
-	return new Ob(target);
-});
-function Ob(target){
-	this.MutationObserver = window.MutationObserver || window.WebKitMutationObserver || window.MozMutationObserver;
-	this.target = target;
-	return this;
+/**
+ * 数组对象
+ * 倒序
+ * 删除
+ * 去重
+ * 求和
+ */
+function $A(arr){
+	return $a(arr);
 }
-Ob.prototype.observer = function(config,fn){
-	var MutationObserver = this.MutationObserver,
-		observer = new MutationObserver(function(mutations){
-			mutations.forEach(function(mutation) {
-					fn.call(this.target);
-			});
-		});
-	observer.observe(this.target, config);
-};
-
-function $arr(arr){
-	return new arryfn(arr);
-}
-function arrayfn(arr){
+function $a(arr){
+	//保存数组
 	this.arr = arr;
-	this.length = arr.length;
+	//保存结果
+	this.result = [];
+}
+$a.prototype.reverse = function(){
+	this.result = this.split('').reverse().join('');
 	return this;
-}
-arrayfn.prototype.sum = function(){
-	var result = 0;
-	var length = this.length;
-	for( var i=0;i<length;i++ ){
-		result += this.arr[i];
-	}
-	return result;
 };
-arrayfn.prototype.unique = function(){
-   var a = {};//哈希表，用来存放不重复的数组
-   for (var i=0; i<this.length; i++) {
-	   var v = this.arr[i];
-	   if (typeof(a[v]) == 'undefined'){
-			a[v] = 1;
-	   }
-   }
-   this.length=0;//清空数组
-   for (var k in a){//哈希表存放的不重复数据，存入数组中
-		this.arr[this.length] = k;  //this.length = 0 , 1 , 2 ……
-   }
-   return this;
-};
-//删除指定位置,
-//n为数组[0,5]…………
-arrayfn.prototype.del = function(n) {
-    if (n < 0) return this;
-	if(typeof n == 'object' && n.push()){//如果是数组（区间）
-		 return this.arr.slice(0,n[0]).concat( this.arr.slice( n[1]+1 , this.arr.length) );
-	}
-	this.arr = this.arr.slice(0, n).concat( this.arr.slice(n + 1, this.length) );
-    return this;
-};
-function $str(str){
-	return newstringfn(str);
-}
-function newstringfn(str){
-	
-}
-//=======系统对象上添加====
-//字符串倒序
-String.prototype.reverse = function(){
-	return this.split('').reverse().join('');
-};
-//数组sum求和方法
-Array.prototype.sum = function(){
-	var result = 0;
-	for( var i=0;i<this.length;i++ ){
-		result += this[i];
-	}
-	return result;
-};
-//数组去重，不能比较DOM节点
-Array.prototype.unique = function(){
-   var a = {};//哈希表，用来存放不重复的数组
-   for (var i=0; i<this.length; i++) {
-	   var v = this[i];
-	   if (typeof(a[v]) == 'undefined'){
-			a[v] = 1;
-	   }
-   }
-   this.length=0;//清空数组
-   for (var k in a){//哈希表存放的不重复数据，存入数组中
-		this[this.length] = k;  //this.length = 0 , 1 , 2 ……
-   }
-   return this;
-};
-//删除指定位置的数组,n = (0,n)，可以是数字，可以是区间
-Array.prototype.del = function(n) {
+$a.prototype.delete = function(n){
     if (n < 0) return this;
 	if(typeof n == 'object' && n.push()){//如果是数组（区间）
 		 return this.slice(0,n[0]).concat( this.slice( n[1]+1 , this.length) );
 	}
-    return this.slice(0, n).concat( this.slice(n + 1, this.length) );
+   this.result = this.slice(0, n).concat( this.slice(n + 1, this.length) );//输出结果
 };
-////拖拽
-//使用方法 new Drag($('press'),$('move'),{left:[100,200],top:[200,500]});(鼠标按住的目标，要移动的目标)
-/*
-var json = {
-			L:[100,300],
-			T:[200,500]
-			}
-*/
+$a.prototype.del = function(n) {
+    if (n < 0) return this.arr;
+    //如果是数组,[2,5]
+	if(typeof n == 'object' && typeof n.push !="undefined" ){//如果是数组（区间）
+		 this.result = this.arr.slice(0,n[0]).concat( this.arr.slice( n[1]+1 , this.arr.length) );
+	}
+	//如果是数字,2
+    this.result = this.arr.slice(0, n).concat( this.arr.slice(n + 1, this.arr.length) );
+    return this;
+};
+$a.prototype.unique = function(n){
+   var a = {};//哈希表，用来存放不重复的数组
+   var arr = this.arr;
+   for (var i=0; i<arr.length; i++) {
+	   var v = arr[i];
+	   if (typeof(a[v]) == 'undefined'){
+			a[v] = 1;
+	   }
+   }
+   arr.length=0;//清空数组
+   for (var k in a){//哈希表存放的不重复数据，存入数组中
+		arr[arr.length] = k;  //this.length = 0 , 1 , 2 ……
+   }
+   this.result = arr;
+   return this;
+};
+$a.prototype.sum = function(){
+	var result = 0;
+	var arr = this.arr;
+	for( var i=0;i<arr.length;i++ ){
+		result += arr[i];
+	}
+	this.result = result;
+};
+/**
+ * 字符串对象
+ * 倒序
+ */
+function $S(str){
+	return $a(str);
+}
+function $s(str){
+	//保存字符串
+	this.str = str;
+	//保存结果
+	this.result = "";
+}
+String.prototype.reverse = function(){
+	return this.split('').reverse().join('');
+};
+$s.prototype.reverse = function(){
+	var str = this.str;
+	this.result = str.split('').reverse().join('');
+	return this;
+};
+
+/**
+ * 拖拽
+ * 使用方法 $('#div1').drag({"L":[100,500],"T":[200,500]})
+ * #div1变成可变拖拽
+ * json：限制拖拽范围
+ * {
+ * 		L:[100,500]		>>left值在100~500
+ * 		T:[200,500]		>>top值在200~500
+ * }
+ */
 $().extend('drag',function(json){
 	for(var i=0;i<this.length;i++){
 		new Drag( this.elements[i],this.elements[i],json );
@@ -179,14 +162,20 @@ Drag.prototype.range = function(iNow,iMin,iMax){
 		return iNow;
 	}
 };
-////拖拽改变大小
-//使用方法 new scale($('press'),$('move'),{width:[100,200],height:[200,500]});(鼠标按住的目标，要移动的目标)
-/*
-var json = {
-			width:[100,300],
-			height:[200,500]
-			}
-*/
+/**
+ * 拖拽改变大小
+ * 使用方法
+ * pressTarget:按住的元素
+ * MoveTarget：移动的元素
+ * json：限制大小
+ * {
+ * 	width:[100,300],
+ * 	height:[200,500]
+ * }
+ */
+$().extend("tab",function(pressTarget,MoveTarget,json){
+	return new Scale(pressTarget,MoveTarget,json);
+});
 function Scale(pressTarget,MoveTarget,json){
 	if(json){
 		this.json = json;
@@ -231,10 +220,11 @@ Scale.prototype.range = function(iNow,iMin,iMax){
 		return iNow;
 	}
 };
-//面向对象选项卡
-//使用方法 new TabSwitch('div1');
-/*
-	<div id="div1">
+/**
+ * 选项卡切换
+ * 使用方法:$('#div1').tab();
+ * 结构:
+ * 	<div id="div1">
 		<input />
 		<input />
 		<input />
@@ -242,8 +232,11 @@ Scale.prototype.range = function(iNow,iMin,iMax){
 		<div></div>
 		<div></div>
 	</div>
-结构：
-*/
+ */
+$().extend("tab",function(){
+	var target = this.elements[0];
+	return new TabSwitch(target);
+});
 function TabSwitch(obj){
 	var _this = this;
 	var div1 = obj;
@@ -263,4 +256,27 @@ TabSwitch.prototype.fnClick = function(oBtn){
 	}
 	oBtn.className='active';
 	this.aDiv[oBtn.index].style.display='block';
+};
+//Mutation监听
+/**
+ * Mutation监听
+ * 使用方式：$('#div1').ob().observer({"childList":true},function(){});
+ * 监听div1的子节点变化
+ */
+$().extend("ob",function(){
+	var target = this.elements[0];
+	return new Ob(target);
+});
+function Ob(target){
+	this.MutationObserver = window.MutationObserver || window.WebKitMutationObserver || window.MozMutationObserver;
+	this.target = target;
+}
+Ob.prototype.observer = function(config,fn){
+	var MutationObserver = this.MutationObserver,
+		observer = new MutationObserver(function(mutations){
+			mutations.forEach(function(mutation) {
+					fn.call(this.target);
+			});
+		});
+	observer.observe(this.target, config);
 };

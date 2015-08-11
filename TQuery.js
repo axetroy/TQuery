@@ -14,12 +14,26 @@ function TQuery(tArg){
 		case "string" :
 				switch( tArg.charAt(0) ){
 					case '<' :	//<div></div>，创建元素
-						var tagName = tArg.match(/^\'<'[a-z]+\'>'/ig)[0].match(/[a-z]+/ig)[0];			//标签名
-						var tagContent = tArg.match( /\'>'[\s\S]*\'<'/ )[0];
-						var content = tagContent.substring(1,tagContent.length-1);					//标签内容
-						var newElement = this.doc.createElement(tagName);
-						newElement.innerHTML = content;
-						this.elements.push(newElement);
+						/**
+						 * [HTML选择器]
+						 * @type {[type]}
+						 * <div data-src='{a:1,b=2}'>asdasd</div><input type='button' value='按钮' placeholder='搜索' style='width:400px;height:500px;background:#303030' />
+						 */
+						var oDiv = document.createElement('div');//创建一个容器
+						var oFragment = document.createDocumentFragment();//创建文档碎片
+						oDiv.innerHTML = tArg;
+						var child = oDiv.getElementsByTagName('*');
+						//储存在文档碎片中
+						for( var t=0;t<child.length;t++ ){
+							var clone = child[t].cloneNode(true);
+							oFragment.appendChild(clone);
+						}
+						//输出到对象中
+						var temp = [];
+						for(var i=0;i<oFragment.childNodes.length;i++){
+							temp.push(oFragment.childNodes[i]);
+						}
+						this.elements = temp;
 						break;
 					default:	//默认情况下是选择符
 						if(this.doc.querySelectorAll){//现代浏览器
@@ -27,9 +41,7 @@ function TQuery(tArg){
 							for(var i=0;i<aElems.length;i++){
 								this.elements.push(aElems[i]);
 							}
-						}else if( !this.doc.querySelectorAll ){
-							alert( '您的浏览器版本太低，请升级至IE8或以上，或者使用chrome，firefox，opera等现代浏览器' );
-						}else{//通用，兼容到IE5-11，firefox，chrome…………
+						}else{//通用，兼容到IE5-11，firefox，chrome…………，但是不支持高级选择器
 								var elements = tArg.split(/\s+/ig);	//拆分节点，并且保持进数组[ul,li,a]
 								var childElements = [];			//创建一个临时数组
 								var parentNode = [];			//用来存放父节点
@@ -626,7 +638,7 @@ TQuery.prototype.hide = function(){
 	return this;//返回对象，进行链式操作
 };
 //Mutation Observer,DOM变动观察器，异步触发的
-TQuery.prototype.matation = function(options,fn){
+TQuery.prototype.mutation = function(options,fn){
 	var MutationObserver,observer;
 	for( var i=0;i<this.length;i++){
 		MutationObserver = window.MutationObserver || window.WebKitMutationObserver || window.MozMutationObserver;
@@ -899,22 +911,26 @@ TQuery.prototype.removeClass = function(cName){
 //=============DOM节点操作
 //插入after，把选择到的元素，插入到obj的后面
 TQuery.prototype.insertAfter = function(obj){
-	var parent;
+	var parent,
+		oFragment = document.createDocumentFragment();//创建文档碎片;
 	for(var i=0;i<this.length;i++){
-		parent = obj.parentNode;//插入位置的父元素
-		if(parent.lastChild == obj){//如果最后的节点是目标节点，直接添加
-			parent.appendChild(this.elements[i]);
-		}else{//如果不是，则插入在目标元素的下一个兄弟节点的前面，也就是目标元素的后面
-			parent.insertBefore(this.elements[i],obj.nextSibling);
-		}
+		oFragment.appendChild(this.elements[i]);
+	}
+	parent = obj.parentNode;//插入位置的父元素
+	if(parent.lastChild == obj){//如果最后的节点是目标节点，直接添加
+		parent.appendChild(oFragment);
+	}else{//如果不是，则插入在目标元素的下一个兄弟节点的前面，也就是目标元素的后面
+		parent.insertBefore(oFragment,obj.nextSibling);
 	}
 	return this;//返回对象，进行链式操作
 };
 //插入insertBefore，把选择到的元素，插入到obj的前面
 TQuery.prototype.insertBefore =function(obj){
+	var oFragment = document.createDocumentFragment();//创建文档碎片
 	for(var i=0;i<this.length;i++){
-		obj.parentNode.insertBefore(this.elements[i],obj);
+		oFragment.appendChild(this.elements[i]);
 	}
+	obj.parentNode.insertBefore(oFragment,obj);
 	return this;//返回对象，进行链式操作
 };
 //清空选中节点
