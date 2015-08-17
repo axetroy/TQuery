@@ -43,8 +43,8 @@ function TQuery(tArg){
 					default:	//默认情况下是选择符
 						if(this.doc.querySelectorAll){//现代浏览器
 							var aElems = this.doc.querySelectorAll(tArg);
-							for(var i=0;i<aElems.length;i++){
-								this.elements.push(aElems[i]);
+							for(var o=0;o<aElems.length;o++){
+								this.elements.push(aElems[o]);
 							}
 						}else{//通用，兼容到IE5-11，firefox，chrome…………，但是不支持高级选择器
 								var elements = tArg.split(/\s+/ig);	//拆分节点，并且保持进数组[ul,li,a]
@@ -94,9 +94,9 @@ function TQuery(tArg){
 												break;
 											}
 											//输出子集节点
-											for(var o=0;o<parentNode.length;o++){
+											for(var z=0;z<parentNode.length;z++){
 												temps =[];		//创建一个临时数组，用于储存子集元素
-												aElement = parentNode[o].getElementsByTagName(elements[h]);//获取伙计下的所有子集元素
+												aElement = parentNode[z].getElementsByTagName(elements[z]);//获取伙计下的所有子集元素
 												for(var p=0;p<aElement.length;p++){
 													temps.push( aElement[p] );
 												}
@@ -127,22 +127,6 @@ TQuery.prototype.eq = function(n){
 	var m = n || 0;
 	this.length = 1;
 	return $(this.elements[m]);//作为对象存进this.elements，以便链式结构
-};
-/**
- * [index 返回当前结点的index值]
- * @return {[type]} [this.index]
- */
-TQuery.prototype.index = function(){
-	var index = 0;
-	var aBrother = this.elements[0].parentNode.children;//获取兄弟节点
-	var length = aBrother.length;
-	for(var i=0;i<length;i++){//遍历
-		if( aBrother[i] == this.elements[0] ){//如果匹配到
-			index = i;
-			break;
-		}
-	}
-	return index;
 };
 /**
  * [not 从元素集合中，剔除某些部分]
@@ -1052,8 +1036,23 @@ TQuery.prototype.attr = function(attr,value){
 				}
 			}
 		}
-		//读取属性
+		//字符串
 		else{
+			//如果是一长串字符串设置' type="button" value="按钮" placeholder="请点击" ',则设置
+			var reg = /(\w+)(\=)(("|')?[\w\u4E00-\u9FA5]+("|')?)/img;
+			var attr1;
+			if(str.match(reg2).length>0){
+				for(var b=0;b<arr.length;b++){
+					attr1 = arr[b].toString().split('=');
+					var key = attr[0];
+					var value1 = attr[1].replace(/'|"/img,"");
+					for(var o=0;o<this.length;o++){
+						this.elements[o][key] = value1;
+					}
+					
+				}
+			}
+			//否则读取
 			return this.elements[0][attr] || this.elements[0].getAttribute(attr);
 		}
 	}
@@ -1103,6 +1102,33 @@ TQuery.prototype.removeClass = function(cName){
 };
 //===========DOM节点操作========
 /**
+ * [append 在所选元素的最后插入content]
+ * @param  {[type]} content [要插入的内容]
+ * @return {[type]}         [this]
+ */
+TQuery.prototype.append = function(content){
+	for(var i=0;i<this.length;i++){
+		var thml = $(this).eq(i).html();
+		$(this).eq(i).html(html + content);
+	}
+};
+/**
+ * [appendChild 把选择的元素，插入到obj的子集元素最后]
+ * @param  {[type]} obj [description]
+ * @return {[type]}     [description]
+ */
+TQuery.prototype.appendChild = function(obj){
+	for(var i=0;i<this.length;i++){
+
+	}
+};
+TQuery.prototype.prepend = function(){
+
+};
+TQuery.prototype.prependChild = function(){
+
+};
+/**
  * [insertAfter 把选择的元素，插入到obj的后面]
  * @param  {[type]} obj [插入的位置]
  * @return {[type]}     [this]
@@ -1140,7 +1166,7 @@ TQuery.prototype.insertBefore =function(obj){
  */
 TQuery.prototype.empty = function(){
 	for(var i=0;i<this.length;i++){
-		this.value(' ');
+		this.val(' ');
 		this.text(' ');
 		this.html(' ');
 	}
@@ -1227,9 +1253,7 @@ TQuery.prototype.proxy = function(fn,_this){
 	fn.call(_this);
 	return this;
 };
-//=============输出调用==========
-////防止constructor被修改
-TQuery.prototype.constructor = TQuery;
+//=============DOM元素方法==========
 /**
  * [get 将TQuery转换成DOM对象]
  * @param  {[type]} n [要选择第n个]
@@ -1237,11 +1261,41 @@ TQuery.prototype.constructor = TQuery;
  */
 TQuery.prototype.get = function(n){
 	n = n || 0;
-	if(n=='all' && this.length>1){//如果没有参数，并且多个，则返回数组
-		return this.elements;
-	}
 	return this.elements[n];
 };
+/**
+ * [index 返回当前结点的index值]
+ * @return {[type]} [this.index]
+ */
+TQuery.prototype.index = function(){
+	var index = 0;
+	var aBrother = this.elements[0].parentNode.children;//获取兄弟节点
+	var length = aBrother.length;
+	for(var i=0;i<length;i++){//遍历
+		if( aBrother[i] == this.elements[0] ){//如果匹配到
+			index = i;
+			break;
+		}
+	}
+	return index;
+};
+/**
+ * [toArray 以数组的形式返回 TQuery 选择器匹配的元素。]
+ * @return {[type]} [Array]
+ */
+TQuery.prototype.toArray = function(){
+	return this.elements;
+};
+/**
+ * [size 返回被 TQuery 选择器匹配的元素的数量]
+ * @return {[type]} [description]
+ */
+TQuery.prototype.size = function(){
+	return this.elements.length;
+};
+//=============输出调用==========
+//防止constructor被修改
+TQuery.prototype.constructor = TQuery;
 function $(tArg){
 	return new TQuery(tArg);
 }
