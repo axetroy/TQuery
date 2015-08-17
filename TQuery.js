@@ -1041,7 +1041,7 @@ TQuery.prototype.attr = function(attr,value){
 			//如果是一长串字符串设置' type="button" value="按钮" placeholder="请点击" ',则设置
 			var reg = /(\w+)(\=)(("|')?[\w\u4E00-\u9FA5]+("|')?)/img;
 			var attr1;
-			if(str.match(reg2).length>0){
+			if(attr.match(reg).length>0){
 				for(var b=0;b<arr.length;b++){
 					attr1 = arr[b].toString().split('=');
 					var key = attr[0];
@@ -1305,16 +1305,13 @@ function addEvent(obj, type, fn){
 	return obj.addEventListener ?
 			obj.addEventListener(type, function(e){
 				var ev = window.event ? window.event : (e ? e : null);
-				// ev.target = ev.target || ev.srcElement;
-				if( fn.call(obj,ev)===false ){//回掉函数为false，则阻止默认时间
+				if( fn.call(obj,ev)===false ){
 					e.cancelBubble = true;//阻止冒泡
 					e.preventDefault();//chrome，firefox下阻止默认事件
 				}
 			}, false)
 			 :
 			obj.attachEvent('on' + type, function(e){
-				//fn.call(obj,e);//解决IE8下，this是window的问题
-				// var ev = window.event ? window.event : (e ? e : null);
 				ev.target = ev.target || ev.srcElement;
 				if(fn.call(obj,ev)===false ){
 					e.cancelBubble = true;//阻止冒泡
