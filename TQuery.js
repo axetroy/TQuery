@@ -14,7 +14,9 @@ function TQuery(tArg){
 		case "undefined" :
 			return this;
 		case "function" :
-			addEvent(window,'load',tArg);
+			addEvent(document,'DOMContentLoaded',function(){
+				tArg.call(this);
+			});
 			break;
 		case "string" :
 				switch( tArg.charAt(0) ){
@@ -23,11 +25,12 @@ function TQuery(tArg){
 						 * [HTML选择器]
 						 * @type {[type]}
 						 * <div data-src='{a:1,b=2}'>asdasd</div><input type='button' value='按钮' placeholder='搜索' style='width:400px;height:500px;background:#303030' />
+						 * 可以多个标签平行，不能有子标签
 						 */
 						var oDiv = document.createElement('div');//创建一个容器
 						var oFragment = document.createDocumentFragment();//创建文档碎片
 						oDiv.innerHTML = tArg;
-						var child = oDiv.getElementsByTagName('*');
+						var child = oDiv.childNodes;
 						//储存在文档碎片中
 						for( var t=0;t<child.length;t++ ){
 							var clone = child[t].cloneNode(true);
@@ -291,6 +294,24 @@ TQuery.prototype.add = function(str){
 	return this;//返回对象
 };
 /**
+ * [findParent 在已选择的元素中，查找他的父级对象]
+ * @param  {[type]} selectors [description]
+ * @return {[type]}           [description]
+ */
+TQuery.prototype.findParent = function(selectors){
+	var parent = this.elements[0].parentNode;
+	if( parent.className.match(/result/) ){
+		this.elements.length = 0;
+		this.elements.push(parent);
+		this.length = this.elements.length;
+		return this;
+	}else if( parent==document.documentElement || parent==document.body){
+		return this;
+	}else{
+		this.findParent(selectors);
+	}
+};
+/**
  * [parent 当前所选元素[0]的第一个父节点]
  * @return {[type]} [this]
  */
@@ -443,18 +464,33 @@ TQuery.prototype.slice = function(n,m){
 };
 //========事件操作========
 /**
- * [ready ready后执行]
+ * [ready DOM节点加载完毕后执行]
  * @param  {Function} fn [函数]
  * @return {[type]}      [this]
  */
 TQuery.prototype.ready = function(fn){
-	for(var i=0;i<this.length;i++){
-		$(this.elements[i]).bind('onload',function(){
-			fn.call(this.elements[i]);
-		});
+	if(this.elements[0]==window){
+		this.elements[0]=document;
 	}
+	this.bind('DOMContentLoaded',function(){
+		fn.call(this);
+	});
 	return this;
 };
+/**
+ * [load 文档全部加载后执行]
+ * @param  {Function} fn [description]
+ * @return {[type]}      [description]
+ */
+TQuery.prototype.load = function(fn){
+	if(this.elements[0]==document){
+		this.elements[0]=window;
+	}
+	this.bind('load',function(){
+		fn.call(this);
+	});
+	return this;
+};	
 /**
  * [each 为匹配的元素，循环遍历]
  * @param  {Function} fn [函数]
@@ -492,6 +528,15 @@ TQuery.prototype.click = function(fn){
 	for(var i=0;i<length;i++){
 		addEvent(this.elements[i],'click',fn);
 	}
+	return this;
+};
+/**
+ * [live 事件委托]
+ * @param  {[type]}   type [事件类型]
+ * @param  {Function} fn   [触发的事件]
+ * @return {[type]}        [this]
+ */
+TQuery.prototype.live = function(type,fn){
 	return this;
 };
 /**
@@ -776,7 +821,7 @@ TQuery.prototype.mutation = function(options,fn){
  * @param  {[type]} FaildFn  [请求失败执行]
  * @return {[type]}          [null]
  */
-TQuery.prototype.ajax = function(url,SucessFn,FaildFn){
+TQuery.ajax = function(url,SucessFn,FaildFn){
 	/*
 		1，实例化对XMLHttpRequese对象
 		2，ajax对象的open方法服务器
@@ -802,7 +847,7 @@ TQuery.prototype.ajax = function(url,SucessFn,FaildFn){
 			if(oAjax.status==200){//状态码=200，请求成功
 				SucessFn(oAjax.responseText);//传参返回值
 			}else{//读取失败
-					FaildFn && FaildFn(oAjax.status);
+					if(FaildFn) FaildFn(oAjax.status);
 			}
 		}
 	};
@@ -1016,6 +1061,9 @@ TQuery.prototype.stop = function(delay){
  */
 TQuery.prototype.attr = function(attr,value){
 	if(arguments.length==2){//2个参数，设置属性
+		if( attr=="className" ){
+			attr = "class";
+		}
 		for(var k=0;k<this.length;k++){
 			if(this.elements[k][attr]){
 				this.elements[k][attr] = value;
@@ -1028,6 +1076,11 @@ TQuery.prototype.attr = function(attr,value){
 		if( typeof(attr) == "object" && Object.prototype.toString.call(attr).toLowerCase() == "[object object]" && !attr.length ){//如果是json，则分别设置属性
 			for(var i=0;i<this.length;i++){
 				for(var j in attr){
+					if( j=="className" || j=="class" ){
+							var classValue = attr[j];
+							this.elements[i].setAttribute("class",classValue);
+							continue;
+					}
 					if( this.elements[i][j] ){//如果属性是可以直接读取
 						this.elements[i][j] = attr[j];
 					}else{//如果是自定义属性
@@ -1040,17 +1093,20 @@ TQuery.prototype.attr = function(attr,value){
 		else{
 			//如果是一长串字符串设置' type="button" value="按钮" placeholder="请点击" ',则设置
 			var reg = /(\w+)(\=)(("|')?[\w\u4E00-\u9FA5]+("|')?)/img;
-			var attr1;
-			if(attr.match(reg).length>0){
-				for(var b=0;b<arr.length;b++){
-					attr1 = arr[b].toString().split('=');
-					var key = attr[0];
-					var value1 = attr[1].replace(/'|"/img,"");
-					for(var o=0;o<this.length;o++){
-						this.elements[o][key] = value1;
+			var arr = attr.match(reg);
+			var attrInfo = {};
+			var attrName,
+				attrValue;
+			if( arr.length>=1 ){
+				for(var m=0;m<arr.length;m++){
+					attrName = arr[m].split('=')[0];
+					attrValue = arr[m].split('=')[1];
+					if(	/^('|").*('|")$/img.test(attrValue) ){
+						attrValue = attrValue.substring(1,arr[m].split('=')[1].length-1);
 					}
-					
+					attrInfo[attrName] = attrValue;
 				}
+				this.attr(attrInfo);
 			}
 			//否则读取
 			return this.elements[0][attr] || this.elements[0].getAttribute(attr);
@@ -1069,19 +1125,34 @@ TQuery.prototype.hasClass = function(obj,cName){
 	return !! obj.className.match(new RegExp("(\\s|^)" + cName + "(\\s|$)"));
 };
 /**
+ * [class 设置/读取class]
+ * @param  {[type]} cName [要设置的值]
+ * @return {[type]}       [this/读取的值]
+ */
+TQuery.prototype.class = function(cName){
+	// console.log(cName)
+	if( cName ){
+		for(var i=0;i<this.length;i++){
+			this.elements[i].className = cName;
+		}
+	}
+	return this.elements[0].className;
+};
+/**
  * [addClass 添加class]
  * @param {[type]} cName [class]
  */
 TQuery.prototype.addClass = function(cName){
 	for(var i=0;i<this.length;i++){
-		if (!this.hasClass(this.elements[i],cName)) {//如果不存在class
-			if( this.elements[i].className === null || this.elements[i].className === '' ){
-				this.elements[i].className = cName;
-			}else{
-				this.elements[i].className += " " + cName;
-				if(this.elements[i].className){
+		if ( this.hasClass(this.elements[i],cName) ) {//如果已经有Class
+			continue;
+		}
+		if( this.elements[i].className === null || this.elements[i].className === '' ){
+			this.elements[i].className = cName;
+		}else{
+			this.elements[i].className += " " + cName;
+			if(this.elements[i].className){
 
-				}
 			}
 		}
 	}
@@ -1095,7 +1166,7 @@ TQuery.prototype.addClass = function(cName){
 TQuery.prototype.removeClass = function(cName){
 	for(var i=0;i<this.length;i++){
 		if (this.hasClass(this.elements[i],cName)) {
-			this.elements[i].className = this.elements[i].className.replace(new RegExp("(\\s|^)" + cName + "(\\s|$)"), ""); // replace方法是替换 
+			this.elements[i].className = this.elements[i].className.replace(new RegExp("(\\s|^)" + cName + "(\\s|$)"), " "); // replace方法是替换 
 		}
 	}
 	return this;//返回对象，进行链式操作
@@ -1268,11 +1339,14 @@ TQuery.prototype.get = function(n){
  * @return {[type]} [this.index]
  */
 TQuery.prototype.index = function(){
-	var index = 0;
-	var aBrother = this.elements[0].parentNode.children;//获取兄弟节点
-	var length = aBrother.length;
-	for(var i=0;i<length;i++){//遍历
-		if( aBrother[i] == this.elements[0] ){//如果匹配到
+	var _this = this,
+		V = {
+			"index":0,
+			"Brothers":_this.elements[0].parentNode.children,//获取兄弟节点
+			"length":this.Brothers.length
+		};
+	for(var i=0;i<V.length;i++){//遍历
+		if( V.Brothers[i] == this.elements[0] ){//如果匹配到
 			index = i;
 			break;
 		}
@@ -1293,6 +1367,187 @@ TQuery.prototype.toArray = function(){
 TQuery.prototype.size = function(){
 	return this.elements.length;
 };
+//=============工具集==========
+/**
+ * [type 判断数据类型]
+ * @param  {[type]} obj [判断的对象]
+ * @return {[type]}     [true||flase]
+ */
+
+$.type = function(obj){
+	var string = Object.prototype.toString.call(obj);
+	return string.split(" ")[1].replace(/\]|\[/img,"").toString().toLowerCase();
+};
+var juggType = {
+	"isNumber":function(obj){
+		if( typeof obj == "number" && !isNaN(obj) ){
+			return true;
+		}else{
+			return false;
+		}
+	},
+	"isString":function(obj){
+		if( typeof obj == "string" || obj instanceof String ){
+			return true;
+		}else{
+			return false;
+		}
+	},
+	"isUndefined":function(obj){
+		return Object.prototype.toString.call(obj) === '[object Undefined]';
+	},
+	"isFunction":function(obj){
+		if( typeof obj == "function" && obj instanceof Function && Object.prototype.toString.call(obj) === '[object Function]' ){
+			return true;
+		}else{
+			return false;
+		}
+	},
+	"isArray":function(obj){
+		return Array.isArray ? Array.isArray(obj) : Object.prototype.toString.call(o) === '[object Array]';
+	},
+	"isObject":function(obj){
+		return Object.prototype.toString.call(obj) === '[object Object]';
+	},
+	"isWindow":function(obj){
+		if( obj == obj.obj ){
+			return true;
+		}else{
+			return false;
+		}
+	}
+};
+for( var mothod in juggType  ){
+	$.type[ mothod ] = juggType[ mothod ];
+}
+/**
+ * [ajax 异步请求]
+ * @param  {[type]} options [配置参数]
+ * @return {[type]}         [description]
+ */
+$.ajax = function(options){
+	var oAjax,
+		data = options.data ? options.data : "",//头部信息。必须是数组[key,value]
+		context = options.context ? options.context : window,//执行上下文，this
+		type = options.type ? options.type : 'GET',//请求方式
+		async = options.async ? options.async : true;//默认异步加载
+	if(window.XMLHttpRequest){//IE7+，chrome，firefox，opara，safari
+		oAjax=new XMLHttpRequest();
+	}else{
+		oAjax=new ActiveXObject("Microsoft.XMLHTTP");//IE5，IE6
+	}
+
+	if(options.beforeSend) options.beforeSend.call(context);//发送之前
+
+	oAjax.setRequestHeader(data[0],data[1]);//设置头部信息
+	oAjax.open(options.type,options.url,async);
+	oAjax.send();
+	oAjax.onreadystatechange=function(){
+		if(oAjax.readyState==4){
+			if(options.complete) options.complete.call(context,oAjax.status);//读取完成
+			if(oAjax.status==200){
+				if(options.success) options.success.call(context,oAjax.responseText);//读取成功
+			}else{
+				if(options.fail) options.fail.call(context,oAjax.status);//读取失败
+			}
+		}
+	};
+};
+/**
+ * [unique 去除重复项目]
+ * @param  {[type]} obj [数组/DOM类数组]
+ * @return {[type]}     [新的数组]
+ */
+$.unique = function(obj){
+	var V = {
+		"hash":{},
+		"arr":[],
+		"length":obj.length
+	};
+	for( var i=0;i<V.length;i++ ){
+		if( typeof V.hash[ obj[i] ] == "undefined" ){
+			V.hash[ obj[i] ] = 1;
+			V.arr.push( obj[i] );
+		}
+	}
+	return V.arr;
+};
+
+//刷新页面
+$.reload = function(){
+	window.location.reload(true);
+};
+
+//打乱数组
+$.shuffleArray = function(arr){
+	var V = {
+		"temp":[],
+		"length":arr.length
+	};
+	for( var i=0;i<V.length;i++ ){
+		V.temp.push( arr[i] );
+	}
+	V.temp.sort(function(){
+		return Math.random()-0.5;
+	});
+	return V.temp;
+};
+
+//获取对象的长度
+$.sizeof = function(obj){
+	var V = {
+		"temp":[],
+		"length":0
+	};
+	for( var attr in obj ){
+		V.length++;
+	}
+	return V.length;
+};
+
+//获取浏览器信息
+$.browser = function(){
+	var V = {
+		"userAgent":navigator.userAgent,
+		"matchRules":{
+			"msie":/msie|Trident/img,//Trident内核
+			"moz":/firefox/img,//Gecko内核
+			"webkit":/webkit/img,//WebKit内核
+			"opera":/opera|Presto/img//Presto内核
+		}
+	};
+	this.browser.msie = function(){
+		return V.matchRules.msie.test( V.userAgent );
+	};
+	this.browser.moz = function(){
+		return V.matchRules.moz.test( V.userAgent );
+	};
+	this.browser.webkit = function(){
+		return V.matchRules.webkit.test( V.userAgent );
+	};
+	this.browser.opera = function(){
+		return V.matchRules.opera.test( V.userAgent );
+	};
+	this.$.browser.which = function(){
+
+	};
+	return V.userAgent;
+};
+
+//获取系统信息
+$.system = function(){
+
+};
+
+/**
+ * [parseJSON 将json字符串转换成json]
+ * @param  {[type]} str           [字符串]
+ * @param  {[type]} compatibility [是否需要兼容模式(不严格模式)]
+ * @return {[type]}               [新的json]
+ */
+$.parseJSON = function(str,compatibility){
+	return (compatibility && compatibility===true) ? (new Function("return " + str))() : JSON.parse(str);
+};
 //=============输出调用==========
 //防止constructor被修改
 TQuery.prototype.constructor = TQuery;
@@ -1302,19 +1557,24 @@ function $(tArg){
 window.$ = window.TQuery = $;
 //=============通用函数===========
 function addEvent(obj, type, fn){
+	var ev = null;
 	return obj.addEventListener ?
 			obj.addEventListener(type, function(e){
-				var ev = window.event ? window.event : (e ? e : null);
+				ev = window.event ? window.event : (e ? e : null);
+				ev.target = ev.target || ev.srcElement;
 				if( fn.call(obj,ev)===false ){
-					e.cancelBubble = true;//阻止冒泡
-					e.preventDefault();//chrome，firefox下阻止默认事件
+					ev.stopPropagation();//阻止冒泡，w3c标准
+					ev.cancelBubble = true;//阻止冒泡
+					ev.preventDefault();//w3c标准
 				}
 			}, false)
 			 :
 			obj.attachEvent('on' + type, function(e){
+				ev = window.event ? window.event : (e ? e : null);
 				ev.target = ev.target || ev.srcElement;
 				if(fn.call(obj,ev)===false ){
-					e.cancelBubble = true;//阻止冒泡
+					ev.cancelBubble = true;//阻止冒泡
+					ev.returnValue = false;//阻止默认事件，针对老版本IE
 					return false;//阻止默认事件，针对IE8
 				}
 			});
@@ -1323,13 +1583,16 @@ function removeEvent(obj,type,fn){
 	return obj.removeEventListener ? obj.removeEventListener(type,fn,false) : obj.detachEvent('on' + type,fn);
 }
 function getByClass(oParent,sClassName){
-	var aElement = oParent.getElementsByTagName('*');//获取所有子节点
-	var result = [];
-	for(var i=0;i<aElement.length;i++){
-		if( aElement[i].className == sClassName ){
-			result.push(aElement[i]);
+	var V = {
+		"elements":oParent.getElementsByTagName('*'),//获取所有子节点
+		"length":this.elements.length,
+		"result":[]
+	};
+	for(var i=0;i<V.elements.length;i++){
+		if( V.elements[i].className == sClassName ){
+			V.result.push(V.elements[i]);
 		}
 	}
-	return result;
+	return V.result;
 }
 })(window,document);
