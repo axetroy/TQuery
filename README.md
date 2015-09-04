@@ -3,6 +3,7 @@
 实现了jquery的大部分常用方法，包括选择符，事件绑定、处理，DOM操作，ajax等等
 个人使用.....
 
+用法我就不多说了，跟jquery差不多，而且目前也就我一个人用。
 
 <h4>兼容哪些浏览器</h4>
 支持IE8+，chrome，firefox，opera等。IE8下，不定期删除某些兼容IE8下的部分。
@@ -19,78 +20,179 @@
 </pre>
 调用：
 <pre>$().alert();  >>>>>>    TQuery{'elements':[],'vision':1.0,'length':0};</pre>
-<h4>已经模拟的方法</h4>
+<h4>已经实现的方法(包括我jquery没有的)</h4>
 选择器：
 <ul>
-	<li>$()</li>
-	<li>find()</li>
-	<li>not()</li>
-	<li>flter()</li>
-	<li>add()</li>
-	<li>parents()</li>
-	<li>children()</li>
-	<li>prev()</li>
-	<li>next()</li>
-	<li>siblings()</li>
-	<li>slice()</li>
-	<li>eq()</li>
-	<li>get()</li>
+	<li>$(selectors)</li>
+	<li>.eq()</li>
+	<li>.first()</li>
+	<li>.last()</li>
+	<li>.not()</li>
+	<li>.filter()</li>
+	<li>.find()</li>
+	<li>.add()</li>
+	<li>.slice()</li>
+	<li>.end()</li>
+	<li>.has()</li>
+	<li>.visible()</li>
+	<li>.unvisible()</li>
+</ul>
+遍历操作：
+<ul>
+	<li>.each()</li>
+	<li>.findParent()</li>
+	<li>.parent()</li>
+	<li>.parents()</li>
+	<li>.children()</li>
+	<li>.prev()</li>
+	<li>.prevAll()</li>
+	<li>.next()</li>
+	<li>.nextAll()</li>
+	<li>.siblings()</li>
 </ul>
 事件操作：
 <ul>
-	<li>each()</li>
-	<li>trigger()</li>
-	<li>click()</li>
-	<li>bind()</li>
-	<li>unbind()</li>
-	<li>on()</li>
-	<li>one()</li>
-	<li>hover()</li>
-	<li>toggle()</li>
-	<li>mouseScroll()</li>
-	<li>matation()</li>
-	<li>ajax()</li>
+	<li>.ready()</li>
+	<li>.load()</li>
+	<li>.click()</li>
+	<li>.keydown()</li>
+	<li>.keyup()</li>
+	<li>.keypress()</li>
+	<li>.mousedown()</li>
+	<li>.mouseup()</li>
+	<li>.mouseenter()</li>
+	<li>.mouseleave()</li>
+	<li>.mousemove()</li>
+	<li>.mouseover()</li>
+	<li>.mouseout()</li>
+	<li>.hover()</li>
+	<li>.on()</li>
+	<li>.toggleClick()</li>
+	<li>.scroll()</li>
+	<li>.mouseScroll()</li>
+	<li>.mouseScrollUp()</li>
+	<li>.mouseScrollDown()</li>
+	<li>.bind()</li>
+	<li>.unbind()</li>
+	<li>.one()</li>
+	<li>.trigger()</li>
+	<li>.live()</li>
+	<li>.die()</li>
+	<li>.mutation()</li>
 </ul>
 获取尺寸及设置：
 <ul>
-	<li>width()</li>
-	<li>height()</li>
-	<li>top()</li>
-	<li>left()</li>
-	<li>viewWidth()</li>
-	<li>viewHeight()</li>
-	<li>style()</li>
-	<li>size()</li>
-	<li>scrollTop()</li>
-	<li>mouseScroll()</li>
+	<li>.width()</li>
+	<li>.height()</li>
+	<li>.innerWIdth()</li>
+	<li>.innerHeight()</li>
+	<li>.top()</li>
+	<li>.left()</li>
+	<li>.viewWidth()</li>
+	<li>.viewHeight()</li>
+	<li>.style()</li>
+	<li>.scrollTop()</li>
+	<li>.scrollHeight()</li>
+	<li>.scrollLeft()</li>
+	<li>.scrollWidth()</li>
+	<li>.size()</li>
+	<li>.offset()</li>
 </ul>
-属性attr的设置
+属性attr的设置:
 <ul>
-	<li>css()</li>
-	<li>animate()</li>
-	<li>stop()</li>
-	<li>attr()</li>
-	<li>hasClass()</li>
-	<li>removeClass()</li>
-	<li>addClass()</li>
-	<li>size()</li>
-	<li>scrollTop()</li>
-	<li>mouseScroll()</li>
+	<li>.prop()</li>
+	<li>.toggleProp()</li>
+	<li>.attr()</li>
+	<li>.toggleAttr()</li>
+	<li>.removeAttr()</li>
+	<li>.hasClass()</li>
+	<li>.addClass()</li>
+	<li>.removeClass()</li>
+	<li>.toggleClass()</li>
+	<li>.data()</li>
+	<li>.removeData()</li>
 </ul>
-DOM节点的操作
+CSS的操作设置:
 <ul>
-	<li>insertAfter()</li>
-	<li>insertBefore()</li>
-	<li>empty()</li>
-	<li>remove()</li>
-	<li>html()</li>
-	<li>text()</li>
-	<li>addClass()</li>
-	<li>value()</li>
+	<li>.css()</li>
+	<li>.addStyle()</li>
+	<li>.removeStyle()</li>
 </ul>
-其他方法
+JS动画特效:
 <ul>
-	<li>show()</li>
-	<li>hide()</li>
-	<li>scroll()</li>
+	<li>.animate()</li>
+	<li>.stop()</li>
+	<li>.show()</li>
+	<li>.hide()</li>
+	<li>.fadeToggle()</li>
+	<li>.fadeIn()</li>
+	<li>.fadeOut()</li>
+	<li>.fadeTo()</li>
+	<li>.scale()</li>
+	<li>.toggle()</li>
+	<li>.slideToggle()</li>
+	<li>.slideRight()</li>
+	<li>.slideLeft()</li>
+	<li>.slideDown()</li>
+	<li>.slideUp()</li>
+	<li>.scrollTo()</li>
+	<li>.scrollToggle()</li>
+</ul>
+DOM节点的操作:
+<ul>
+	<li>.clone()</li>
+	<li>.append()</li>
+	<li>.appendChild()</li>
+	<li>.prepend()</li>
+	<li>.prependChild()</li>
+	<li>.after()</li>
+	<li>.before()</li>
+	<li>.remove()</li>
+	<li>.empty()</li>
+	<li>.html()</li>
+	<li>.text()</li>
+	<li>.val()</li>
+</ul>
+其他方法:
+<ul>
+	<li>.proxy()</li>
+	<li>.delay()</li>
+	<li>.do()</li>
+</ul>
+转换:
+<ul>
+	<li>.get()</li>
+	<li>.toArray()</li>
+	<li>.index()</li>
+</ul>
+
+工具集合：
+<ul>
+	<li>$.type()</li>
+	<li>$.isNumber()</li>
+	<li>$.isString()</li>
+	<li>$.isFunction()</li>
+	<li>$.isArray()</li>
+	<li>$.isObject()</li>
+	<li>$.isDOM()</li>
+	<li>$.isWindow()</li>
+	<li>$.isUndefined()</li>
+	<li>$.ajax()</li>
+	<li>$.unique()</li>
+	<li>$.noop()</li>
+	<li>$.trim()</li>
+	<li>$.now()</li>
+	<li>$.reload()</li>
+	<li>$.toArray()</li>
+	<li>$.upper()</li>
+	<li>$.shuffleArray()</li>
+	<li>$.sizeof()</li>
+	<li>$.browser()</li>
+	<li>$.browser.webkit()</li>
+	<li>$.browser.msie()</li>
+	<li>$.browser.moz()</li>
+	<li>$.browser.opera()</li>
+	<li>$.merge()</li>
+	<li>$.map()</li>
+	<li>$.parseJSON()</li>
 </ul>
