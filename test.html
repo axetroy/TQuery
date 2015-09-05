@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Document</title>
+	<style type="text/css">
+	*{margin:0;padding: 0;}
+	body{height:5000px;background: #303030}
+	div{margin:0 auto;}
+	</style>
+	<link rel="stylesheet" type="text/css" href="">
+	<script type="text/javascript" src="TQuery.js"></script>
+	<script type="text/javascript">
+	$(document).ready(function(){
+		$('.wrap').css({
+			"width":600,
+			"height":300,
+			"background":"green"
+		});
+		$('#div1').css({
+			"width":500,
+			"height":250,
+			"background":"black"
+		});
+		$('#div2').css({
+			"width":400,
+			"height":200,
+			"background":"red"
+		});
+		$('#div3').css({
+			"width":300,
+			"height":150,
+			"background":"yellow"
+		});
+
+		$('input').click(function(){
+			alert( $(this).index() );
+		}).reinit('.wrap').click(function(){
+			alert( this.className );
+			$(document).trigger('click');
+			$(document).unbind('click');
+			return false;
+		}).reinit('div').not('.wrap').click(function(){
+			alert(this.id);
+			return false;
+		});
+
+		var $sub = $.sub();
+	});
+	</script>
+</head>
+<body>
+
+<input type="button" value="按钮">
+<input type="button" value="按钮">
+<input type="button" value="按钮">
+<input type="button" value="按钮">
+<input type="button" value="按钮">
+<input type="button" value="按钮">
+<input type="button" value="按钮">
+<input type="button" value="按钮">
+<input type="button" value="按钮">
+<input type="button" value="按钮">
+
+<div class="wrap">
+	<div id="div1">
+		<div id="div2">
+			<div id="div3"></div>
+		</div>
+	</div>
+</div>
+
+</body>
+</html>

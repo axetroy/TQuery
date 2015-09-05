@@ -1,13 +1,13 @@
-(function(win, doc, undefined) {
+;(function(win, doc, undefined) {
 	var $ = (function() {
 		//构造函数
 		var TQuery = function(selectors){
 			return TQuery.fn.init(selectors);
 		};
-		var vision = 1.01;
+		var vision = 1.02;
 		TQuery.fn = TQuery.prototype = {
 			"constructor": TQuery,
-			"TQuery.js": vision,
+			"TQuery": vision,
 			//初始化
 			"init": function(selectors) {
 				this.selectors = selectors;
@@ -71,6 +71,10 @@
 				}
 				this.refresh(eles);
 				return this;
+			},
+			//重拾新的对象
+			"reinit":function(selectors){
+				return this.init(selectors);
 			},
 			//刷新对象数据
 			"refresh": function(newArray) {
@@ -357,7 +361,6 @@
 			//==============事件=============
 			"ready": function(fn) {
 				if (this[0] == win) this[0] = doc;
-				// console.log( document.addEventListener('DOMContentLoaded',function(){},false) );
 				this.bind('DOMContentLoaded', function(e) {
 					fn.call(this, e);
 					this.ready = "complete";
@@ -365,9 +368,8 @@
 					return false;
 				},"ready");
 				//如果不支持DOMContentLoaded(IE8及以下不支持),
-				if( !TQuery.browser.msie() || TQuery.browser.msie()>8 ) return this;
+				if( !TQuery.browser.msie() || TQuery.browser().visoin>8 ) return this;
 				if( typeof this[0].ready == "undefined" ||this[0].ready!=="complete" ){
-					alert('onreadystatechange');
 					if( typeof this[0].onreadystatechange !== "undefined" ){
 						this.bind('readystatechange',function(e){
 							if(this.readyState == 'complete'){
@@ -400,47 +402,59 @@
 				if (this[0] == doc) this[0] = win;
 				this.bind('load', function(e) {
 					if (fn.call(this, e) === false) {
-						return false;
+						return stop.call(e);
 					}
-				});
+				},'load');
 				return this;
+			},
+			"unload":function(fn){
+				this.reinit(win).bind('unload',function(e){
+					fn.call(this,e);
+					return stop.call(e);
+				},"unload");
+			},
+			"isreload":function(message){
+				this.reinit(win).bind('beforeunload',function(e){
+					e.returnValue = message;
+					return message;
+				},'beforeunload');
 			},
 			"click": function(fn) {
 				this.bind('click', function(e) {
 					if (fn.call(this, e) === false) {
-						return false;
+						return stop.call(e);
 					}
-				}, "click");
+				});
 				return this;
 			},
 			"keydown": function(fn) {
 				this.bind('keydown', function(e) {
 					if (fn.call(this, e) === false) {
-						return false;
+						return stop.call(e);
 					}
-				}, "keydown");
+				});
 				return this;
 			},
 			"keyup": function(fn) {
 				this.bind('keyup', function(e) {
 					if (fn.call(this, e) === false) {
-						return false;
+						return stop.call(e);
 					}
-				}, "keyup");
+				});
 				return this;
 			},
 			"keypress": function(fn) {
 				this.bind('keypress', function(e) {
 					if (fn.call(this, e) === false) {
-						return false;
+						return stop.call(e);
 					}
-				}, "keypress");
+				});
 				return this;
 			},
 			"mousedown": function(fn) {
 				this.bind('mousedown', function(e) {
 					if (fn.call(this, e) === false) {
-						return false;
+						return stop.call(e);
 					}
 				});
 				return this;
@@ -448,7 +462,7 @@
 			"mouseup": function(fn) {
 				this.bind('mouseup', function(e) {
 					if (fn.call(this, e) === false) {
-						return false;
+						return stop.call(e);
 					}
 				});
 				return this;
@@ -458,8 +472,8 @@
 					if (e.target == this) {
 						fn.call(this, e);
 					}
-					return false; //默认禁止冒泡
-				}, "mouseenter");
+					return stop.call(e); //默认禁止冒泡
+				});
 				return this;
 			},
 			"mouseleave": function(fn) {
@@ -467,32 +481,32 @@
 					if (e.target == this) {
 						fn.call(this, e);
 					}
-					return false; //默认禁止冒泡
-				}, "mouseleave");
+					return stop.call(e); //默认禁止冒泡
+				});
 				return this;
 			},
 			"mousemove": function(fn) {
 				this.bind("mousemove", function(e) {
 					if (fn.call(this, e) === false) {
-						return false;
+						return stop.call(e);
 					}
-				}, "mousemove");
+				});
 				return this;
 			},
 			"mouseover": function(fn) {
 				this.bind("mouseover", function(e) {
 					if (fn.call(this, e) === false) {
-						return false;
+						return stop.call(e);
 					}
-				}, "mouseover");
+				});
 				return this;
 			},
 			"mouseout": function(fn) {
 				this.bind("mouseout", function(e) {
 					if (fn.call(this, e) === false) {
-						return false;
+						return stop.call(e);
 					}
-				}, "mouseout");
+				});
 				return this;
 			},
 			"on": function(type, fn) {
@@ -505,11 +519,7 @@
 							this[k]['on' + attr] = function(e) {
 								ev = win.event ? win.event : (e ? e : null);
 								if (type[attr].call(this, ev) === false) {
-									ev.stopPropagation(); //阻止冒泡，w3c标准
-									ev.cancelBubble = true; //阻止冒泡,ie,firefox
-									ev.preventDefault(); //w3c标准
-									ev.returnValue = false; //阻止默认事件，针对老版本IE
-									return false;
+									return stop.call(e);
 								}
 							};
 						}
@@ -558,15 +568,22 @@
 				for (var i = 0; i < this.length; i++) {
 					this.bind('click', function() {
 						_arguments[data.count++ % data.fns].call(_this[i]);
-						return false; //默认禁止冒泡
+						return stop.call(e);; //默认禁止冒泡
 					}, 'toggleClick');
 				}
 				return this;
 			},
+			"resize":function(fn){
+				this.bind('resize',function(e){
+					if( fn.call(this,e) === false){
+						return stop.call(e);
+					}
+				});
+			},
 			"scroll": function(fn) {
 				this.bind('scroll', function(e) {
 					if (fn.call(this, e) === false) {
-						return false;
+						return stop.call(e);
 					}
 				});
 				return this;
@@ -574,9 +591,9 @@
 			"mouseScroll": function(fn) {
 				this.bind('mousewheel DOMMouseScroll', function(e) {
 					if (fn.call(this, e) === false) {
-						return false;
+						return stop.call(e);
 					}
-				});
+				},'mouseScroll');
 				return this;
 			},
 			"mouseScrollUp": function(fn) {
@@ -584,13 +601,13 @@
 					if (e.wheelDelta) { //chrome,ie
 						if (e.wheelDelta > 0) { //滚轮向上滚动
 							if (fn.call(this, e) === false) {
-								return false;
+								return stop.call(e);
 							}
 						}
 					} else { //狗日的firefox
 						if (e.detail < 0) { //滚轮向上滚动
 							if (fn.call(this, e) === false) {
-								return false;
+								return stop.call(e);
 							}
 						}
 					}
@@ -602,13 +619,13 @@
 					if (e.wheelDelta) { //chrome,ie
 						if (e.wheelDelta < 0) { //滚轮向下滚动
 							if (fn.call(this, e) === false) {
-								return false;
+								return stop.call(e);
 							}
 						}
 					} else { //狗日的firefox
 						if (e.detail > 0) { //滚轮向下滚动
 							if (fn.call(this, e) === false) {
-								return false;
+								return stop.call(e);
 							}
 						}
 					}
@@ -709,7 +726,7 @@
 								var ev = win.event ? win.event : (e ? e : null);
 								_this.unbind(ev.type, 'one');
 								if (type[attr].call(this, ev) === false) {
-									return false;
+									return stop.call(e);
 								}
 							}, "one");
 						}
@@ -727,7 +744,7 @@
 								var ev = win.event ? win.event : (e ? e : null);
 								_this.unbind(ev.type, 'one');
 								if (fn.call(this, ev) === false) {
-									return false;
+									return stop.call(e);
 								}
 							}, "one");
 							j++;
@@ -780,7 +797,7 @@
 							break;
 						}
 					}
-					return false;
+					return stop.call(e);//默认阻止冒泡
 				}, liveIndex);
 				return this;
 			},
@@ -801,6 +818,12 @@
 					observer.observe(this[i], options);
 				}
 				return this;
+			},
+			//支持的标签<input type="text">, <select>, <textarea>，js对象：fileUpload, select, text, textarea
+			"change":function(fn){
+				this.bind('change',function(e){
+					fn.call(this,e);
+				});
 			},
 			//==============尺寸=============
 			"width": function(setting) {
@@ -827,7 +850,7 @@
 					return this[0].offsetHeight || parseFloat(this.style('height')); //获取高度
 				}
 			},
-			"innerWIdth": function() {
+			"innerWidth": function() {
 
 			},
 			"innerHeight": function() {
@@ -1032,11 +1055,14 @@
 				this.addClass(values[data.count++ % data.values.length]);
 				return this;
 			},
-			"data": function(key, value) {
+			"data": function(key,value) {
 				var data = this[0].dataTQuery = this[0].dataTQuery || {};
-				if (arguments.length == 1 && typeof data[key] !== "undefined") { //读数据
+				//读数据
+				if (arguments.length == 1 && typeof data[key] !== "undefined") { 
 					return data[key];
-				} else { //存数据
+				}
+				//存数据
+				else {
 					for (var i = 0; i < this.length; i++) {
 						data = this[i].dataTQuery;
 						data[key] = value;
@@ -1119,63 +1145,165 @@
 				}
 				return this;
 			},
-			"addStyle": function(name, contents) {
-
+			//参数：内容，{}(properties)
+			"addStyle": function() {
+				var contents,prop,textNode,styleSheet;
+				for( var i=0;i<arguments.length;i++ ){
+					var agm = arguments[i];
+					//Style内容
+					if( TQuery.isString(agm) ){
+						contents = agm;
+					}
+					//Style属性
+					else if( TQuery.isObject(agm) ){
+						prop = agm;
+					}
+				}
+				textNode = doc.createTextNode(contents);
+				styleSheet = doc.createElement('style');
+				styleSheet.type = "text/css";
+				for( var attr in prop ){
+					if( typeof styleSheet[attr] !=="undefined" ){
+						styleSheet[attr] = prop[attr];
+					}
+				}
+				styleSheet.appendChild(textNode);
+				doc.head.appendChild(styleSheet);
+				return this;
 			},
-			"removeStyle": function(name) {
-
+			//参数：内容，{}(properties)
+			"addScript":function(){
+				var contents,url,prop,position,textNode,script;
+				for( var i=0;i<arguments.length;i++ ){
+					var agm = arguments[i];
+					//内容
+					if( TQuery.isString(agm) ){
+						contents = agm;
+					}
+					//属性
+					else if( TQuery.isObject(agm) ){
+						prop = agm;
+					}
+					//position,true为头部，false为尾部
+					else if( TQuery.isBoolean(agm) ){
+						position = agm;
+					}
+				}
+				contents = contents ? contents : "";
+				textNode = doc.createTextNode(contents);
+				script = doc.createElement('script');
+				script.type = "text/javascript";
+				for( var attr in prop ){
+					if( !TQuery.isUndefined(script[attr]) ){
+						script[ attr ] = prop[attr];
+					}
+				}
+				script.appendChild(textNode);
+				//插入头部
+				if( position===true ){
+					doc.head.appendChild(script);
+				}
+				//插入尾部
+				else{
+					doc.body.appendChild(script);
+				}
+				return this;
+			},
+			//参数：{}(properties)
+			"addLink":function(){
+				var link = doc.createElement('link');
+				for( var attr in arguments[0] ){
+					link[ attr ] = arguments[0][ attr ];
+				}
+				doc.head.appendChild( link );
+				return this;
 			},
 			//==============动画=============
-			"animate": function(properties, options) {
-				//如果两个参数.animate('width','300');
-				//如果是json
-				if (Object.prototype.toString.call(properties) === '[object Object]') {
-					for (var i = 0; i < this.length; i++) {
-						var _this = this.elements[i];
-						clearInterval(_this.animate);
-						_this.animate = setInterval(function() {
-							var bStop = true,
-								current,
-								target;
-							for (var attr in properties) {
-								// 1. 取得当前的值(可以是width，height，opacity等的值)
-								current = 0; //当前值
-								target = 0; //目标值
-								if (attr == 'opacity') {
-									current = Math.round(parseFloat($(_this).style(attr)) * 100);
-									target = parseFloat(properties[attr]) * 100;
-								} else {
-									current = parseInt($(_this).style(attr));
-									target = parseFloat(properties[attr]);
-								}
-								// 2.计算运动速度
-								var speedConfig = (options && typeof(options.speed) != 'undefined') ? options.speed : 10;
-								var iSpeed = (target - current) / speedConfig;
-								iSpeed = iSpeed > 0 ? Math.ceil(iSpeed) : Math.floor(iSpeed);
-								// 3. 检测所有运动是否到达目标
-								if ((iSpeed > 0 && current <= target) || (iSpeed < 0 && current >= target)) {
-									bStop = false;
-								}
-								// 4. 开始运动
-								if (attr == "opacity") {
-									_this.style.filter = 'alpha(opacity=' + (current + iSpeed) + ')';
-									_this.style.opacity = (current + iSpeed) / 100;
-								} else {
-									_this.style[attr] = current + iSpeed + 'px';
-								}
-								if (options && typeof options.load != 'undefined') {
-									options.load.call(_this);
-								}
-								// 4. 运动停止
-								if (bStop) {
-									clearInterval(_this.animate);
-									if (options && typeof options.end != 'undefined') {
-										options.end.call(_this);
-									}
-								}
-							}
-						}, 1000 / 60);
+			//{},load,speed,callBack
+			"animate": function() {
+				var properties,load,speed,callBack,this_ = this,fps = parseInt(1000/60);
+				for( var o=0;o<arguments.length;o++ ){
+					var agm = arguments[o];
+					// properties
+					if( TQuery.isObject( agm ) ){
+						properties = agm;
 					}
+					// load
+					else if( TQuery.isFunction( agm ) && o!==arguments.length-1 ){
+						load = agm;
+					}
+					// speed
+					else if( TQuery.isNumber( agm ) || ( TQuery.isString(agm) &&  agm>=0) ){
+						speed = agm;
+					}
+					// callBack
+					else if( TQuery.isFunction( agm ) && o==arguments.length-1 ){
+						callBack = agm;
+					}
+				}
+				for (var i = 0; i < this.length; i++) {
+					var _this = this[i];
+					clearInterval(_this.animate);
+					_this.animate = setInterval(function() {
+						var bStop = true,
+							current,
+							target;
+							
+						for (var attr in properties) {
+							// 1. 取得当前的值(可以是width，height，opacity等的值)
+							current = 0; //当前值
+							target = 0; //目标值
+							if (attr == 'opacity') {
+								current = Math.round(parseFloat($(_this).style(attr)) * 100);
+								target = parseFloat(properties[attr]) * 100;
+							}
+							else if( attr== 'scrollTop' ){
+								current = parseInt( this_.scrollTop() );
+								target = parseInt( properties[attr] );
+							}
+							else {
+
+								current = parseInt($(_this).style(attr));
+								target = parseFloat(properties[attr]);
+							}
+							// 2.计算运动速度
+							var speedConfig = typeof(speed) != 'undefined' ? speed : 10;
+							var iSpeed = (target - current) / speedConfig;
+							iSpeed = iSpeed > 0 ? Math.ceil(iSpeed) : Math.floor(iSpeed);
+							// 3. 检测所有运动是否到达目标
+							if ((iSpeed > 0 && current <= target) || (iSpeed < 0 && current >= target)) {
+								bStop = false;
+							}
+							// 4. 开始运动
+							if (attr == "opacity") {
+								_this.style.filter = 'alpha(opacity=' + (current + iSpeed) + ')';
+								_this.style.opacity = (current + iSpeed) / 100;
+							}
+							else if( attr == 'scrollTop' ){
+								this_.scrollTo( target );
+							}
+							else {
+								_this.style[attr] = current + iSpeed + 'px';
+							}
+							load && load.call(_this);
+							// 4. 运动停止
+							if (bStop) {
+								clearInterval(_this.animate);
+								callBack && callBack.call(_this);
+							}
+						}
+					},fps);
+				}
+				return this;
+			},
+			"animateToggle":function(){
+				var _arguments = arguments;
+				var data = this.data('animateToggle'); //获取属性
+				if (typeof data.count == "undefined") data.count = 0;
+				if (typeof data.objLength == "undefined") data.objLength = _arguments.length;
+				this.data('animateToggle', data); //设置属性
+				for (var i = 0; i < this.length; i++) {
+					this.animate( _arguments[data.count++ % data.objLength] );
 				}
 				return this;
 			},
@@ -1244,8 +1372,34 @@
 					}
 				});
 			},
-			"scale": function() {
-
+			"scale": function(times,callBack) {
+				callBack = TQuery.isFunction(callBack) ? callBack : TQuery.noop;
+				var prop = {},width,height,arr = [],
+					eles = this.toArray();
+				for( var i=0;i<eles.length;i++ ){
+					var _this = $(eles[i]);
+					width = _this.data('size').width || _this.width();
+					height = _this.data('size').height || _this.height();
+					_this.data("size",{"width":width,"height":height});
+					_this.animate( {"width":width*times,"height":height*times},callBack );
+				}
+				return this;
+			},
+			"scaleToggle":function(){
+				var agms = arguments,callBack;
+				//如果最后一位是function，则最为回掉
+				if( TQuery.isFunction(agms[length-1]) ) {
+					callBack = agms[length-1];
+				}else{
+					callBack = TQuery.noop;
+				}
+				var _arguments = TQuery.toArray(arguments).splice(0,arguments.length-1);
+				var data = this.data('scaleToggle'); //获取属性
+				if (typeof data.count == "undefined") data.count = 0;
+				if (typeof data.agms == "undefined") data.agms = _arguments.length;
+				this.data('scaleToggle', data); //设置属性
+				this.scale( _arguments[data.count++ %data.agms] ,callBack);
+				return this;
 			},
 			"toggle": function() {
 				var _arguments = arguments;
@@ -1324,7 +1478,6 @@
 			"scrollTo": function(target, callBack) {
 				//传入DOM节点
 				if ( TQuery.isDOM(target) ) {
-
 					target = parseInt($(target).offset('top'));
 				}
 				//传入选择符,字符串
@@ -1498,28 +1651,6 @@
 		};
 		TQuery.fn.init.prototype = TQuery.fn;
 		//==============工具集=============
-		TQuery.speed = {
-			//匀速
-			"linear": function() {
-
-			},
-			//规定慢速开始，然后变快，然后慢速结束的过渡效果（cubic-bezier(0.25,0.1,0.25,1)）
-			"ease": function() {
-
-			},
-			//规定以慢速开始的过渡效果（等于 cubic-bezier(0.42,0,1,1)）
-			"ease-in": function() {
-
-			},
-			//规定以慢速结束的过渡效果（等于 cubic-bezier(0,0,0.58,1)）。
-			"ease-out": function() {
-
-			},
-			//规定以慢速开始和结束的过渡效果（等于 cubic-bezier(0.42,0,0.58,1)）。
-			"ease-in-out": function() {
-
-			}
-		};
 		//****检查类型****
 		TQuery.type = function(obj) {
 			var string = Object.prototype.toString.call(obj);
@@ -1556,11 +1687,33 @@
 			//IE8下，一切皆为object
 			return /html|document|element|object/img.test(Object.prototype.toString.call(obj).split(" ")[1]) && typeof obj.parentNode !=="undefined";
 		};
+		TQuery.isBoolean = function(obj){
+			return (obj===true || obj===false) ? true : Object.prototype.toString.call(obj)==='[object Boolean]';
+		};
 		TQuery.isWindow = function(obj) {
 			return (obj == obj.obj && typeof obj == "object") ? true : false;
 		};
 		TQuery.isUndefined = function(obj) {
 			return Object.prototype.toString.call(obj) === '[object Undefined]';
+		};
+		//创新一个新的TQuery副本
+		TQuery.sub = function(){
+			//构造函数
+			var newTQuery = function(selectors){
+				return newTQuery.fn.init(selectors);
+			};
+			// // newTQuery.fn.prototype = TQuery.prototype;
+			for( var attr in $().prototype ){
+				console.log( attr );
+				if( attr>=0 || attr =="length" ){
+					continue;
+				}
+				if( TQuery.isUndefined(newTQuery.fn[attr]) && TQuery.isUndefined(newTQuery.prototype[attr]) ){
+					newTQuery.fn[attr] = newTQuery.prototype[attr] = $().prototype[attr];
+				}
+			}
+			// newTQuery.fn.init.prototype = newTQuery.fn;
+			return newTQuery;
 		};
 		//****AJAX****
 		TQuery.ajax = function(options) {
@@ -1613,7 +1766,7 @@
 			return;
 		};
 
-		//去掉收尾空格，同jquery
+		//去掉首尾空格，同jquery
 		TQuery.trim = function(str) {
 			var newStr = str.replace(/^\s*(\S*)\s*$/img, "$1");
 			return newStr;
@@ -1708,7 +1861,6 @@
 				"vision":vision
 			};
 		};
-		// return /webkit/img.test(ua);
 		TQuery.browser.webkit = function() {
 			var content = ua.match( /Chrome\/[\d\.]+/img );
 			if( /webkit/img.test(ua)===false ){
@@ -1807,28 +1959,15 @@
 			return (compatibility && compatibility === true) ? (new Function("return " + str))() : JSON.parse(str);
 		};
 		//插件入口
-		TQuery.extend = TQuery.fn.extend = function() {
-			// $(document).ready(function(){
-				if (typeof TQuery.prototype[name] !== "undefined") {
-					TQuery.prototype[name] = fn;
-				} else {
-					console.log("has esixt");
+		TQuery.extend = TQuery.fn.extend = function(object) {
+			for( var name in object ){
+				if( TQuery.isUndefined(TQuery.prototype[name]) ){
+					TQuery.fn[name] = TQuery.prototype[name] = object[name];
 				}
-			// });
+			}
 			return this;
 		};
 
-
-
-		var $ARR = function(arr) {
-
-		};
-
-		var $OBJ = function(obj) {
-
-		};
-
-		var rootTQuery = TQuery(doc);
 		return TQuery;
 	})();
 
