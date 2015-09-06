@@ -99,17 +99,42 @@
 				this.refresh(newArray);
 				return this;
 			},
-			"first": function() {
-				var newArray = [];
-				newArray[0] = this[0];
-				this.refresh(newArray);
-				return this;
+			//CSS3:nth-child
+			"nth":function(selectors){
+				var s = this.selectors.split(",");//'input,ul li'
+				for( var i=0;i<s.length;i++ ){
+					s[i] += ':nth-child(' + selectors + ')';
+				}
+				return this.reinit(s.join(","));
 			},
-			"last": function() {
-				var newArray = [];
-				newArray[0] = this[this.length - 1];
-				this.refresh(newArray);
-				return this;
+			//倍数选择器
+			"an":function(n){
+				n = n ? n : 1;
+				this.nth(n + 'n');
+			},
+			//奇数,2n-1
+			"odd":function(){
+				return this.nth('odd');
+			},
+			//偶数,2n
+			"even":function(){
+				return this.nth('even');
+			},
+			"first": function() {
+				var s = this.selectors.split(",");//'input,ul li'
+				for( var i=0;i<s.length;i++ ){
+					s[i] += ':first-child';
+				}
+				return this.reinit( s.join(",") );
+			},
+			//选择倒数第几个，默认为0
+			"last":function(n){
+				n = n ? n : 1;
+				var s = this.selectors.split(",");//'input,ul li'
+				for( var i=0;i<s.length;i++ ){
+					s[i] += ':nth-last-child(' + n + ')';
+				}
+				return this.reinit( s.join(",") );
 			},
 			"not": function(selectors) {//过滤掉
 				var childElements = [];
@@ -187,20 +212,9 @@
 				return this;
 			},
 			"add": function(selectors) {
-				var newTQ = $(selectors); //先获取元素
-				var temps = this.init.elements;
-				var a = {};
-				for (var i = 0; i < this.length; i++) {
-					a[this[i]] = 1;
-				}
-				//去重复
-				for (var j = 0; j < newTQ.length; j++) {
-					if (typeof a[newTQ[j]] == 'undefined') {
-						a[newTQ[j]] = 1;
-						temps.push(newTQ[j]);
-					}
-				}
-				this.refresh(temps);
+				var newSelectors = this.selectors + ',' + selectors;
+				var newElements = doc.querySelectorAll(newSelectors);
+				this.refresh(newElements);
 				return this;
 			},
 			"slice": function(n, m) {
@@ -215,54 +229,63 @@
 				this.refresh(newArray);
 				return this;
 			},
+			//是否包含元素
 			"has": function(selectors) {
 				var newArray = [];
 				for (var i = 0; i < this.length; i++) {
-					if (this.elements[i].querySelectorAll(selectors).length > 0) {
-						newArray.push(this.elements[i]);
+					if (this[i].querySelectorAll(selectors).length > 0) {
+						newArray.push(this[i]);
 					}
 				}
 				this.refresh(newArray);
 				return this;
 			},
+			//可见
+			"visible":function(){
+
+			},
+			//不可见
+			"unvisible":function(){
+
+			},
 			//在可视区域内的
-			"visible": function() {
-				this.visible.get = function(jugg) {
+			"inViewPort": function() {
+				this.inViewPort.get = function(jugg) {
 					var visi = [],
 						unvisi = [],
 						w, h, pos, inViewPort;
 					for (var i = 0; i < this.length; i++) {
-						pos = this.elements[i].getBoundingClientRect();
+						pos = this[i].getBoundingClientRect();
 						w = doc.documentElement.clientWidth || doc.body.clientWidth;
 						h = doc.documentElement.clientHeight || doc.body.clientHeight;
 						inViewPort = pos.top > h || pos.bottom < 0 || pos.left > w || pos.right < 0;
 						if (inViewPort === true) { //不在可视区域
-							unvisi.push(this.elements[i]);
+							unvisi.push(this[i]);
 						} else { //在可视区域
-							visi.push(this.elements[i]);
+							visi.push(this[i]);
 						}
 					}
 					return jugg === true ? visi : unvisi;
 				};
-				var newArray = this.visible.get.call(this, true);
+				var newArray = this.inViewPort.get.call(this, true);
 				this.refresh(newArray);
 				return this;
 			},
 			//不在可视区域内
-			"unvisible": function() {
-				var newArray = this.visible.get.call(this, false);
+			"outViewPort": function() {
+				var newArray = this.inViewPort.get.call(this, false);
 				this.refresh(newArray);
 				return this;
 			},
 			//==============遍历=============
 			"each": function(fn) {
 				for (var i = 0; i < this.length; i++) {
-					fn.call(this.elements[i]);
+					fn.call(this[i]);
 				}
 				return this;
 			},
 			"findParent": function(selectors) {
-				var parent = this.elements[0].parentNode;
+				var parent = this[0].parentNode;
 				if (parent.className.match(/result/)) { //找到结果
 					var newArray = [];
 					newArray[0] = parent;
@@ -276,7 +299,7 @@
 			},
 			"parent": function() {
 				var newArray = [];
-				newArray[0] = this.elements[0].parentNode;
+				newArray[0] = this[0].parentNode;
 				this.refresh(newArray);
 				return this;
 			},
@@ -330,7 +353,7 @@
 			"next": function() {
 				var temps = [];
 				for (var i = 0; i < this.length; i++) {
-					var ele = this.elements[i];
+					var ele = this[i];
 					if ($(ele).index() == ele.parentNode.children.length - 1) { //如果处最后一位，没有下一个兄弟节点
 						continue;
 					}
@@ -722,7 +745,7 @@
 				if (arguments.length == 1) {
 					for (var k = 0; k < this.length; k++) {
 						for (var attr in type) {
-							// bindEvent(this.elements[k],attr,type[attr],fnName);
+							// bindEvent(this[k],attr,type[attr],fnName);
 							this.bind(attr, function(e) {
 								var ev = win.event ? win.event : (e ? e : null);
 								_this.unbind(ev.type, 'one');
@@ -740,7 +763,7 @@
 					for (var i = 0; i < this.length; i++) {
 						var j = 0;
 						while (j < eventsLength) {
-							// this.elements[i][ 'on'+events[j] ] = fn;
+							// this[i][ 'on'+events[j] ] = fn;
 							this.bind(events[j], function(e) {
 								var ev = win.event ? win.event : (e ? e : null);
 								_this.unbind(ev.type, 'one');
@@ -805,8 +828,8 @@
 				return this;
 			},
 			"die": function(type, parent) {
-				var liveIndex = this.elements[0].liveIndex;
-				parent = parent ? parent : (this.elements[0].parentLive ? this.elements[0].parentLive : doc);
+				var liveIndex = this[0].liveIndex;
+				parent = parent ? parent : (this[0].parentLive ? this[0].parentLive : doc);
 				$(parent).unbind(type, liveIndex);
 			},
 			"mutation": function(options, fn) {
@@ -902,6 +925,15 @@
 				return this[0]['offset' + TQuery.upper(attr)];
 			},
 			//==============属性=============
+			//可编辑性,true>>>可编辑,false>>>不可编辑
+			"modify":function(boolean){
+				boolean = (typeof boolean !== "undefined") ? boolean : true;
+				this.prop({
+					"contentEditable":boolean,
+					"readOnly":!boolean
+				});
+				return this;
+			},
 			//一个是特性
 			"prop": function(prop, value) {
 				if (arguments.length == 1) {
@@ -912,7 +944,11 @@
 					//写,json格式
 					else {
 						for (var key in prop) {
-							this[i][key] = prop[key];
+							for( var j=0;j<this.length;j++ ){
+								if( typeof this[j][key] !=="undefined" ){
+									this[j][key] = prop[key];
+								}
+							}
 						}
 					}
 				}
@@ -1138,7 +1174,7 @@
 							// 	if((type.test(k) || type2.test(k)) && attr[k].indexOf('%')<0 ){//如果没有%符号
 							// 		attr[k] = parseFloat( attr[k] ).toFixed(2) + 'px';
 							// 	}
-							// 	this.elements[i].style[k] = attr[k];
+							// 	this[i].style[k] = attr[k];
 							// }
 							//纯CSS写法
 							for (key in attr) {
@@ -1573,11 +1609,11 @@
 				for (var i = 0; i < this.length; i++) {
 					oFragment.appendChild(this[i]);
 				}
-				parent = obj.parentNode; //插入位置的父元素
-				if (parent.lastChild == obj) { //如果最后的节点是目标节点，直接添加
+				parent = DOMNode.parentNode; //插入位置的父元素
+				if (parent.lastChild == DOMNode) { //如果最后的节点是目标节点，直接添加
 					parent.appendChild(oFragment);
 				} else { //如果不是，则插入在目标元素的下一个兄弟节点的前面，也就是目标元素的后面
-					parent.insertBefore(oFragment, obj.nextSibling);
+					parent.insertBefore(oFragment, DOMNode.nextSibling);
 				}
 				return this;
 			},
@@ -1587,7 +1623,7 @@
 				for (var i = 0; i < this.length; i++) {
 					oFragment.appendChild(this[i]);
 				}
-				obj.parentNode.insertBefore(oFragment, obj);
+				DOMNode.parentNode.insertBefore(oFragment, DOMNode);
 				return this;
 			},
 			"remove": function() {
@@ -1634,7 +1670,7 @@
 			},
 			"val": function(setting) {
 				if (setting) {
-					this.prop("value",setting1);
+					this.prop("value",setting);
 					return this;
 				} else {
 					return this[0].value;
@@ -2033,22 +2069,6 @@
 		if (typeof this.returnValue !== "undefined") this.returnValue = false; //阻止默认事件，针对老版本IE
 		return false;
 	}
-
-	function getByClass(oParent, sClassName) {
-		var V = {
-			"elements": oParent.getElementsByTagName('*'), //获取所有子节点
-			"length": this.elements.length,
-			"result": []
-		};
-		for (var i = 0; i < V.elements.length; i++) {
-			if (V.elements[i].className == sClassName) {
-				V.result.push(V.elements[i]);
-			}
-		}
-		return V.result;
-	}
-
-
 
 	win.TQuery = win.$ = $;
 })(window, document, undefined);
