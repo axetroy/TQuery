@@ -32,20 +32,9 @@
 			"height":150,
 			"background":"yellow"
 		});
-
-		$('input').click(function(){
-			alert( $(this).index() );
-		}).reinit('.wrap').click(function(){
-			alert( this.className );
-			$(document).trigger('click');
-			$(document).unbind('click');
-			return false;
-		}).reinit('div').not('.wrap').click(function(){
-			alert(this.id);
-			return false;
+		$(document).click(function(){
+			$('.wrap').toggleClass('abc','aaa','456');
 		});
-
-		var $sub = $.sub();
 	});
 	</script>
 </head>

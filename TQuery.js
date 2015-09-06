@@ -16,7 +16,7 @@
 					case "undefined":
 						return this;
 					case "function":
-						this.bind(doc, 'DOMContentLoaded', function(e) {
+						this.ready(function(e){
 							selectors.call(this, e);
 						});
 						break;
@@ -46,8 +46,10 @@
 									for (var o = 0; o < aElems.length; o++) {
 										eles.push(aElems[o]);
 									}
-								}else{
-									alert('您的浏览器不支持');
+								}
+								//IE8以下
+								else{
+									console.log('您的浏览器不支持TQuery');
 								}
 						}
 						break;
@@ -361,12 +363,11 @@
 			//==============事件=============
 			"ready": function(fn) {
 				if (this[0] == win) this[0] = doc;
-				this.bind('DOMContentLoaded', function(e) {
+				this.reinit(doc).bind('DOMContentLoaded', function(e) {
 					fn.call(this, e);
 					this.ready = "complete";
-					$(this).unbind('DOMContentLoaded',"ready");
-					return false;
-				},"ready");
+					// $(this).unbind('DOMContentLoaded',"ready");
+				});
 				//如果不支持DOMContentLoaded(IE8及以下不支持),
 				if( !TQuery.browser.msie() || TQuery.browser().visoin>8 ) return this;
 				if( typeof this[0].ready == "undefined" ||this[0].ready!=="complete" ){
@@ -633,7 +634,7 @@
 				return this;
 			},
 			"bind": function(type, fn, fnName) {
-				//如果只传一个json参数e
+				//如果只传一个json参数
 				if (arguments.length == 1) {
 					for (var k = 0; k < this.length; k++) {
 						for (var attr in type) {
@@ -758,12 +759,11 @@
 					var dom = this[k];
 					if (!fnName) {
 						//如果是自定义事件
-						if (typeof dom["on" + type] == "undefined") {
+						if ( TQuery.isUndefined(dom["on" + type]) || TQuery.isUndefined(dom[type]) ) {
 							//触发DOM2级事件，通过bind绑定的。
 							if (dom.eventQueue) {
 								for (var fn in dom.eventQueue[type]) {
 									dom.eventQueue[type][fn].call(dom);
-
 								}
 							}
 						}
@@ -781,6 +781,9 @@
 					}
 				}
 				return this;
+			},
+			"triggerHandler":function(type, fnName){
+				this.trigger(type, fnName);
 			},
 			"live": function(type, fn, parent) {
 				var _this = this,
@@ -902,29 +905,31 @@
 			//一个是特性
 			"prop": function(prop, value) {
 				if (arguments.length == 1) {
-					//读取特性
+					//读取
 					if (typeof prop == "string") {
 						return this[0][prop];
 					}
-					//写特定，json格式
+					//写,json格式
 					else {
 						for (var key in prop) {
 							this[i][key] = prop[key];
 						}
 					}
-				} else if (arguments.length == 2) {
+				}
+				else if (arguments.length == 2) {
 					for (var i = 0; i < this.length; i++) {
 						this[i][prop] = value;
 					}
 				}
 				return this;
 			},
+			// .toggleProp('value',[1,2,3,4,5,6]) || .toggleProp('value')
 			"toggleProp": function(prop, array) {
 				var type = {
 					"prop": TQuery.type(prop),
 					"array": TQuery.type(array)
 				};
-				//1个值的toggle,有/无
+				//1个值的toggle,增加/删除
 				if (arguments.length <= 2 && (type.array !== "array" || type.array == "undefined")) {
 					for (var i = 0; i < this.length; i++) {
 						if (!this[i][prop]) { //不存在
@@ -986,12 +991,13 @@
 				}
 				return this;
 			},
+			// .toggleProp('data-set',[1,2,3,4,5,6]) || .toggleProp('data-set')
 			"toggleAttr": function(attr, array) {
 				var type = {
 					"attr": TQuery.type(attr),
 					"array": TQuery.type(array)
 				};
-				//1个值的toggle
+				//1个值的toggle,增加和删除
 				if (arguments.length <= 2 && (type.array !== "array" || type.array == "undefined")) {
 					for (var i = 0; i < this.length; i++) {
 						if (!this[i].getAttribute(attr)) { //不存在
@@ -1037,24 +1043,29 @@
 				}
 				return this;
 			},
+			// .toggleProp('class1','class2','class3') || .toggleProp('class1')
 			"toggleClass": function() {
+				//单个ClassName开关
 				if (arguments.length === 1) {
 					for (var i = 0; i < this.length; i++) {
-						this[i].classList.toggle(arguments[0]);
+						this[i].classList.toggle( arguments[0] );
 					}
-					return this;
 				}
-				var values = TQuery.toArray(arguments);
-				var data = this.data('toggleAttr'); //读取属性
-				if (typeof data.count == "undefined") data.count = 0;
-				if (typeof data.values == "undefined") data.values = values;
-				for (var j = 0; j < arguments.length; j++) {
-					this.removeClass(arguments[j]);
+				//多个className切换
+				else{
+					var values = TQuery.toArray(arguments);
+					var data = this.data('toggleAttr'); //读取属性
+					if (typeof data.count == "undefined") data.count = 0;
+					if (typeof data.values == "undefined") data.values = values;
+					for (var j = 0; j < arguments.length; j++) {
+						this.removeClass(arguments[j]);
+					}
+					this.data('toggleAttr', data); //设置属性
+					this.addClass(values[data.count++ % data.values.length]);
 				}
-				this.data('toggleAttr', data); //设置属性
-				this.addClass(values[data.count++ % data.values.length]);
 				return this;
 			},
+			// .data('info',{})
 			"data": function(key,value) {
 				var data = this[0].dataTQuery = this[0].dataTQuery || {};
 				//读数据
@@ -1219,7 +1230,7 @@
 				return this;
 			},
 			//==============动画=============
-			//{},load,speed,callBack
+			//animate({},load,speed,callBack)
 			"animate": function() {
 				var properties,load,speed,callBack,this_ = this,fps = parseInt(1000/60);
 				for( var o=0;o<arguments.length;o++ ){
@@ -1296,6 +1307,7 @@
 				}
 				return this;
 			},
+			//animateToggle({},{},{},{})
 			"animateToggle":function(){
 				var _arguments = arguments;
 				var data = this.data('animateToggle'); //获取属性
@@ -1310,19 +1322,19 @@
 			"stop": function(delay) {
 				var stardelay = delay ? delay : 0;
 				setTimeout(function() {
-					clearInterval($(this).elements[0].animate);
+					clearInterval($(this)[0].animate);
 				}, stardelay);
 				return this;
 			},
 			"show": function() {
 				for (var i = 0; i < this.length; i++) {
-					this.elements[i].style.display = 'block';
+					this[i].style.display = 'block';
 				}
 				return this;
 			},
 			"hide": function() {
 				for (var i = 0; i < this.length; i++) {
-					this.elements[i].style.display = 'none';
+					this[i].style.display = 'none';
 				}
 				return this;
 			},
@@ -1340,36 +1352,30 @@
 				this.css('display', 'block');
 				this.animate({
 					"opacity": 1
-				}, {
-					"end": function() {
-						if (callBack) callBack(this);
-					}
+				},function(){
+					if (callBack) callBack(this);
 				});
 			},
 			"fadeOut": function(callBack) {
 				var _this = this;
 				this.animate({
 					"opacity": 0
-				}, {
-					"end": function() {
-						_this.css('display', 'none');
-						if (callBack) callBack(this);
-					}
+				},function(){
+					_this.css('display', 'none');
+					if (callBack) callBack(this);
 				});
 			},
 			"fadeTo": function(target, callBack) {
 				var _this = this;
 				this.animate({
 					"opacity": target
-				}, {
-					"end": function() {
+				}, function(){
 						if (target <= 0) {
 							_this.css('display', 'none');
 						} else {
 							_this.css('display', 'block');
 						}
 						if (callBack) callBack(this);
-					}
 				});
 			},
 			"scale": function(times,callBack) {
@@ -1385,15 +1391,17 @@
 				}
 				return this;
 			},
+			//scaleToggle(2,3,1,0.5,callBack)
 			"scaleToggle":function(){
-				var agms = arguments,callBack;
+				var agms = arguments,_arguments,callBack;
 				//如果最后一位是function，则最为回掉
-				if( TQuery.isFunction(agms[length-1]) ) {
+				if( TQuery.isFunction( agms[length-1] ) ) {
 					callBack = agms[length-1];
+					_arguments = TQuery.toArray(arguments).splice(0,arguments.length-1);
 				}else{
 					callBack = TQuery.noop;
+					_arguments = TQuery.toArray(arguments);
 				}
-				var _arguments = TQuery.toArray(arguments).splice(0,arguments.length-1);
 				var data = this.data('scaleToggle'); //获取属性
 				if (typeof data.count == "undefined") data.count = 0;
 				if (typeof data.agms == "undefined") data.agms = _arguments.length;
@@ -1425,10 +1433,8 @@
 				var width = this.data('size').width;
 				this.show().animate({
 					"width": width
-				}, {
-					"end": function() {
-						if (callBack) callBack.call(this);
-					}
+				}, function(){
+					if (callBack) callBack.call(this);
 				});
 				return this;
 			},
@@ -1440,11 +1446,9 @@
 				var _this = this;
 				this.animate({
 					"width": 0
-				}, {
-					"end": function() {
-						_this.hide();
-						if (callBack) callBack.call(this);
-					}
+				},function(){
+					_this.hide();
+					if (callBack) callBack.call(this);
 				});
 				return this;
 			},
@@ -1452,10 +1456,8 @@
 				var height = this.data('size').height;
 				this.show().animate({
 					"height": height
-				}, {
-					"end": function() {
-						if (callBack) callBack.call(this);
-					}
+				}, function(){
+					if (callBack) callBack.call(this);
 				});
 				return this;
 			},
@@ -1467,11 +1469,9 @@
 				var _this = this;
 				this.animate({
 					"height": 0
-				}, {
-					"end": function() {
-						_this.hide();
-						if (callBack) callBack.call(this);
-					}
+				}, function(){
+					_this.hide();
+					if (callBack) callBack.call(this);
 				});
 				return this;
 			},
@@ -1522,6 +1522,27 @@
 				return this;
 			},
 			//==============DOM=============
+			"replace":function(DOMNode){
+				//传入DOM节点
+				if( TQuery.isDOM( DOMNode ) ){
+					DOMNode = DOMNode;
+				}
+				//传入DOM字符串
+				else{
+
+				}
+				//替换
+				for( var i=0;i<this.length;i++ ){
+					doc.body.replaceChild(DOMNode,this[i]);//DOMNode替换掉this[i]
+				}
+				return this;
+			},
+			"replaceAll":function(){
+				
+			},
+			"replaceWidth":function(){
+				
+			},
 			"clone": function(deep) {
 				var newElements = [],
 					cloneNode;
@@ -1545,7 +1566,8 @@
 			"prependChild": function() {
 
 			},
-			"after": function(obj) {
+			//插入到DOMNode之后
+			"after": function(DOMNode) {
 				var parent,
 					oFragment = doc.createDocumentFragment(); //创建文档碎片;
 				for (var i = 0; i < this.length; i++) {
@@ -1559,7 +1581,8 @@
 				}
 				return this;
 			},
-			"before": function() {
+			//插入到DOMNode之前
+			"before": function(DOMNode) {
 				var oFragment = doc.createDocumentFragment(); //创建文档碎片
 				for (var i = 0; i < this.length; i++) {
 					oFragment.appendChild(this[i]);
@@ -1579,7 +1602,7 @@
 				return this;
 			},
 			"html": function(setting) {
-				if (setting) { //设置
+				if (setting) {
 					for (var i = 0; i < this.length; i++) {
 						this[i].innerHTML = setting;
 					}
@@ -1598,11 +1621,20 @@
 					return this[0].innerText || this[0].textContent;
 				}
 			},
-			"val": function() {
+			//带标签,注释
+			"contents":function(setting){
 				if (setting) {
 					for (var i = 0; i < this.length; i++) {
-						this[i].value = setting;
+						this[i].outerText = this[i].outerHTML = setting;
 					}
+					return this;
+				} else {
+					return this[0].outerText || this[0].outerHTML;
+				}
+			},
+			"val": function(setting) {
+				if (setting) {
+					this.prop("value",setting1);
 					return this;
 				} else {
 					return this[0].value;
@@ -1696,23 +1728,21 @@
 		TQuery.isUndefined = function(obj) {
 			return Object.prototype.toString.call(obj) === '[object Undefined]';
 		};
-		//创新一个新的TQuery副本
-		TQuery.sub = function(){
+		//创新一个新的TQuery副本,可以自行修改方法，属性，而不影响原有的。
+		TQuery.sub = function(selectors){
 			//构造函数
 			var newTQuery = function(selectors){
 				return newTQuery.fn.init(selectors);
-			};
-			// // newTQuery.fn.prototype = TQuery.prototype;
-			for( var attr in $().prototype ){
-				console.log( attr );
-				if( attr>=0 || attr =="length" ){
-					continue;
-				}
-				if( TQuery.isUndefined(newTQuery.fn[attr]) && TQuery.isUndefined(newTQuery.prototype[attr]) ){
-					newTQuery.fn[attr] = newTQuery.prototype[attr] = $().prototype[attr];
-				}
+			};			
+			for( var prop in $ ){
+				newTQuery[prop] = $[prop];
 			}
-			// newTQuery.fn.init.prototype = newTQuery.fn;
+			var prototype = {};
+			for( var attr in $.prototype ){
+				prototype[attr] = $.prototype[attr];
+			}
+			newTQuery.fn = newTQuery.prototype = prototype;
+			newTQuery.fn.init.prototype = newTQuery.fn;
 			return newTQuery;
 		};
 		//****AJAX****
